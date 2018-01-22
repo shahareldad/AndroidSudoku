@@ -19,12 +19,22 @@ import android.widget.RelativeLayout;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class BoardActivity extends AppCompatActivity {
 
     private String TAG = "BoardActivity";
+    private String FILENAME = "games_art_sudoku_saved_board";
 
     private Handler mHandler = null;
     private TextView lastSelectedCell = null;
@@ -35,6 +45,7 @@ public class BoardActivity extends AppCompatActivity {
     private SudokuSolver _solver = null;
     private int[][] _solvedBoard = null;
     private int _counter = 0;
+    private GridLayout _mainGridLayout = null;
 
     private AdView _adView;
 
@@ -54,18 +65,123 @@ public class BoardActivity extends AppCompatActivity {
         _screenWidth = size.x;
         _screenHeight = size.y;
 
-        final GridLayout mainGridLayout = findViewById(R.id.mainGridLayout);
+        _mainGridLayout = findViewById(R.id.mainGridLayout);
         mHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg) {
                 TextView textView = (TextView)msg.obj;
-                mainGridLayout.addView(textView);
+                _mainGridLayout.addView(textView);
             }
         };
 
         _solver = new SudokuSolver();
-        StartNewGame(mainGridLayout, _level, true);
-        InitKeyboard(mainGridLayout);
+
+        ArrayList<CellData> cells = TryLoadSavedGame();
+        if (cells != null){
+            StartNewGame(_mainGridLayout, _level, false);
+            SetUserDigitsOnBoard(cells);
+        }
+        else{
+            StartNewGame(_mainGridLayout, _level, true);
+        }
+
+        InitKeyboard(_mainGridLayout);
+    }
+
+    private void SetUserDigitsOnBoard(ArrayList<CellData> cells) {
+
+    }
+
+    private ArrayList<CellData> TryLoadSavedGame() {
+        byte[] fileData = null;
+
+        try{
+            FileInputStream fos = openFileInput(FILENAME);
+            fos.read(fileData);
+            fos.close();
+        }
+        catch (FileNotFoundException ex){
+            Log.e(TAG, "SaveCurrentBoardState.FileNotFoundException: " + ex.getMessage());
+        }
+        catch (IOException ex){
+            Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
+        }
+
+        if (fileData == null){
+            return null;
+        }
+
+        String gsoned = "";
+
+        try{
+            gsoned = new String(fileData, "UTF-8");
+        }catch (UnsupportedEncodingException ex){
+            Log.e(TAG, "SaveCurrentBoardState.UnsupportedEncodingException: " + ex.getMessage());
+        }
+
+        Gson gson = new GsonBuilder().create();
+        ArrayList<CellData> cells = new ArrayList<>();
+        cells = gson.fromJson(gsoned, cells.getClass());
+
+        _board = new int[9][9];
+        int length = cells.size();
+        if (length != 81){
+            Log.e(TAG, "TryLoadSavedGame.Length of loaded game array is not 81. Something went wrong on last save. Stopping load process.");
+            return null;
+        }
+        for (int index = 0; index < length; index++){
+            CellData temp = cells.get(index);
+            if (temp.getIsCellConst())
+                _board[temp.getRow()][temp.getColumn()] = temp.getCellDigit();
+            else
+                _board[temp.getRow()][temp.getColumn()] = 0;
+        }
+
+        return cells;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        SaveCurrentBoardState();
+    }
+
+    private void SaveCurrentBoardState() {
+        ArrayList<CellData> cells = new ArrayList<>(81);
+
+        for (int index = 0; index < 81; index++){
+            CellData item = new CellData();
+            TextView cell = (TextView)_mainGridLayout.getChildAt(index);
+            String cellStringValue = cell.getText().toString();
+            if (cellStringValue.equals(""))
+                item.setCellDigit(0);
+            else
+                item.setCellDigit(Integer.valueOf(cellStringValue));
+
+            String tag = String.valueOf(cell.getTag());
+            int row = Character.getNumericValue(tag.charAt(0));
+            int col = Character.getNumericValue(tag.charAt(1));
+            int isConst = Character.getNumericValue(tag.charAt(2));
+            item.setRow(row);
+            item.setColumn(col);
+            item.setIsCellConst(isConst == 1);
+            cells.add(item);
+        }
+        Gson gson = new GsonBuilder().create();
+        String result = gson.toJson(cells);
+
+        try{
+            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos.write(result.getBytes("UTF-8"));
+            fos.close();
+        }
+        catch (FileNotFoundException ex){
+            Log.e(TAG, "SaveCurrentBoardState.FileNotFoundException: " + ex.getMessage());
+        }
+        catch (IOException ex){
+            Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
+        }
     }
 
     private void InitKeyboard(final GridLayout mainGridLayout) {
