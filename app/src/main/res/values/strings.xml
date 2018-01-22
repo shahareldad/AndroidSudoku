@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Sudoku by Art Games</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="solve">Solve</string>
+    <string name="gameOver">Game Over</string>
+    <string name="youWin">You win!</string>
+    <string name="startNew">New game</string>
+    <string name="selectLevel">Level Selection</string>
+    <string name="solutionIsIncorrect">Solution incorrect!</string>
+    <string name="resetCurrent">Reset current</string>
+    <string name="continueCurrent">Continue</string>
+</resources>

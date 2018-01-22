@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.gamesart.sudoku.sudoku.FirstViewActivity">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/easyGame"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".33"
+            android:text="@string/easy"/>
+
+        <Button
+            android:id="@+id/mediumGame"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".33"
+            android:text="@string/medium"/>
+
+        <Button
+            android:id="@+id/hardGame"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".33"
+            android:text="@string/hard"/>
+    </LinearLayout>
+
+    <com.google.android.gms.ads.AdView
+        android:layout_above="@id/gameKeyboard"
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adViewTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        ads:adSize="MEDIUM_RECTANGLE"
+        android:layout_marginTop="5dp"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+        <!--ads:adUnitId="ca-app-pub-8402023979328526/1983770365">-->
+    </com.google.android.gms.ads.AdView>
+
+    <com.google.android.gms.ads.AdView
+        android:layout_above="@id/gameKeyboard"
+        xmlns:ads="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/adViewBottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        ads:adSize="LARGE_BANNER"
+        android:layout_marginTop="5dp"
+        ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
+        <!--ads:adUnitId="ca-app-pub-8402023979328526/4606064270">-->
+    </com.google.android.gms.ads.AdView>
+
+</LinearLayout>
