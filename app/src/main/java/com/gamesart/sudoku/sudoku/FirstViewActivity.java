@@ -32,6 +32,7 @@ public class FirstViewActivity extends AppCompatActivity {
         Button easyBtn = findViewById(R.id.easyGame);
         Button mediumBtn = findViewById(R.id.mediumGame);
         Button hardBtn = findViewById(R.id.hardGame);
+        Button loadGame = findViewById(R.id.loadGame);
 
         easyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,6 +52,13 @@ public class FirstViewActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 startNewGameByLevel(3);
+            }
+        });
+
+        loadGame.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startNewGameByLevel(-1);
             }
         });
     }

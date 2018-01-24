@@ -5,31 +5,29 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
-
+import android.widget.TextView;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import java.io.FileInputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 public class BoardActivity extends AppCompatActivity {
 
@@ -46,11 +44,14 @@ public class BoardActivity extends AppCompatActivity {
     private int[][] _solvedBoard = null;
     private int _counter = 0;
     private GridLayout _mainGridLayout = null;
+    private ArrayList<CellData> _cells = null;
 
     private AdView _adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate started");
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
@@ -75,53 +76,81 @@ public class BoardActivity extends AppCompatActivity {
         };
 
         _solver = new SudokuSolver();
+    }
 
-        ArrayList<CellData> cells = TryLoadSavedGame();
-        if (cells != null){
+    @Override
+    protected void onResume() {
+        Log.d(TAG, "onStop onResume");
+        super.onResume();
+
+        if (_level == -1) {
+            _level = 1;
+            _cells = TryLoadSavedGame();
+        }
+        if (_cells != null){
             StartNewGame(_mainGridLayout, _level, false);
-            SetUserDigitsOnBoard(cells);
         }
         else{
+            _cells = new ArrayList<>(81);
             StartNewGame(_mainGridLayout, _level, true);
         }
 
         InitKeyboard(_mainGridLayout);
     }
 
-    private void SetUserDigitsOnBoard(ArrayList<CellData> cells) {
-
+    @Override
+    protected void onPause() {
+        Log.d(TAG, "onStop started");
+        super.onPause();
+        SaveCurrentBoardState();
     }
 
     private ArrayList<CellData> TryLoadSavedGame() {
+        Log.d(TAG, "TryLoadSavedGame started");
+
         byte[] fileData = null;
+        BufferedReader br = null;
+        StringBuilder builder = null;
+        InputStream stream = null;
 
         try{
-            FileInputStream fos = openFileInput(FILENAME);
-            fos.read(fileData);
-            fos.close();
-        }
-        catch (FileNotFoundException ex){
-            Log.e(TAG, "SaveCurrentBoardState.FileNotFoundException: " + ex.getMessage());
+            stream = openFileInput(FILENAME);
+            br = new BufferedReader(new InputStreamReader(stream));
+            builder = new StringBuilder();
+
+            String line = "";
+            while ((line = br.readLine()) != null){
+                builder.append(line);
+            }
+            stream.close();
         }
         catch (IOException ex){
             Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
+        }
+        finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
         if (fileData == null){
             return null;
         }
 
-        String gsoned = "";
-
-        try{
-            gsoned = new String(fileData, "UTF-8");
-        }catch (UnsupportedEncodingException ex){
-            Log.e(TAG, "SaveCurrentBoardState.UnsupportedEncodingException: " + ex.getMessage());
-        }
-
         Gson gson = new GsonBuilder().create();
         ArrayList<CellData> cells = new ArrayList<>();
-        cells = gson.fromJson(gsoned, cells.getClass());
+        cells = gson.fromJson(builder.toString(), cells.getClass());
 
         _board = new int[9][9];
         int length = cells.size();
@@ -140,14 +169,9 @@ public class BoardActivity extends AppCompatActivity {
         return cells;
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        SaveCurrentBoardState();
-    }
-
     private void SaveCurrentBoardState() {
+        Log.d(TAG, "SaveCurrentBoardState started");
+
         ArrayList<CellData> cells = new ArrayList<>(81);
 
         for (int index = 0; index < 81; index++){
@@ -170,10 +194,12 @@ public class BoardActivity extends AppCompatActivity {
         }
         Gson gson = new GsonBuilder().create();
         String result = gson.toJson(cells);
+        Log.d(TAG, "Gsoned the CellData list: " + result);
 
+        FileOutputStream fos = null;
         try{
-            FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
-            fos.write(result.getBytes("UTF-8"));
+            fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos.write(result.getBytes());
             fos.close();
         }
         catch (FileNotFoundException ex){
@@ -182,9 +208,20 @@ public class BoardActivity extends AppCompatActivity {
         catch (IOException ex){
             Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
         }
+        finally {
+            if (fos != null){
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     private void InitKeyboard(final GridLayout mainGridLayout) {
+        Log.d(TAG, "InitKeyboard started");
+
         GridLayout keyboardGrid = findViewById(R.id.gameKeyboard);
         int length = keyboardGrid.getChildCount();
         int height = _screenWidth / 9;
@@ -199,6 +236,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SetKeyboardKeysWidth(int numericWidth, int commandWidth, TextView keyboardKey) {
+        Log.d(TAG, "SetKeyboardKeysWidth started");
+
         String text = String.valueOf(keyboardKey.getText());
         switch (text){
             case "1":
@@ -221,6 +260,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SetKeyboardClick(final GridLayout mainGridLayout, final TextView keyboardKey) {
+        Log.d(TAG, "SetKeyboardClick started");
+
         keyboardKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -259,6 +300,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CaseClearSelected(String currentText, char isConst) {
+        Log.d(TAG, "CaseClearSelected started");
+
         if (lastSelectedCell == null)
             return;
         if (isConst == '1')
@@ -270,6 +313,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CaseDigitSelected(String text, String currentText, char isConst, GridLayout mainGridLayout) {
+        Log.d(TAG, "CaseDigitSelected started");
+
         if (lastSelectedCell == null)
             return;
         if (isConst == '1')
@@ -281,6 +326,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CheckWinState(final GridLayout mainGridLayout){
+        Log.d(TAG, "CheckWinState started");
+
         if (_counter != 0)
             return;
 
@@ -326,6 +373,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void ShowAlertDialogOnGameOver(final GridLayout mainGridLayout, AlertDialog.Builder builder, final String[] items) {
+        Log.d(TAG, "ShowAlertDialogOnGameOver started");
+
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -338,6 +387,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void GameOverMenuItemClicked(DialogInterface dialogInterface, String selection, GridLayout mainGridLayout) {
+        Log.d(TAG, "GameOverMenuItemClicked started");
+
         if (selection.equals(getString(R.string.startNew))){
             StartNewGame(mainGridLayout, _level, true);
         }
@@ -352,7 +403,9 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    public static int[][] deepCopy(int[][] original) {
+    private int[][] deepCopy(int[][] original) {
+        Log.d(TAG, "deepCopy started");
+
         if (original == null) {
             return null;
         }
@@ -365,55 +418,69 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void StartNewGame(GridLayout mainGridLayout, int level, boolean newBoard) {
+        Log.d(TAG, "StartNewGame started");
+
         mainGridLayout.removeAllViews();
 
         if (newBoard){
             SudokuGenerator generator = new SudokuGenerator();
             _board = generator.GetBoard(level);
+            _cells.clear();
+            for (int row = 0; row < 9; row++){
+                for (int col = 0; col < 9; col++){
+                    CellData item = new CellData();
+                    item.setRow(row);
+                    item.setColumn(col);
+                    item.setCellDigit(_board[row][col]);
+                    if (_board[row][col] == 0)
+                        item.setIsCellConst(false);
+                    else
+                        item.setIsCellConst(true);
+                    _cells.add(item);
+                }
+            }
         }
-
-        int rowCount = mainGridLayout.getRowCount();
-        int columnCount = mainGridLayout.getColumnCount();
 
         int cellDimension = _screenWidth / 9;
         Log.d("BoardActivity", "cellDimension Pixel measurement: " + String.valueOf(cellDimension));
 
-        for (int row = 0; row < rowCount; row++){
-            for (int col = 0; col < columnCount; col++){
+        for(int index = 0; index < 81; index++){
+            class CreateCell implements Runnable{
 
-                class CreateCell implements Runnable{
+                private final int _digit;
+                private final int _row;
+                private final int _col;
+                private final int _cellDimension;
+                private final boolean _isCellConst;
 
-                    private final int[][] _board;
-                    private final int _row;
-                    private final int _col;
-                    private final int _cellDimension;
-
-                    CreateCell (int[][] board, int row, int col, int px){
-                        _board = board;
-                        _row = row;
-                        _col = col;
-                        _cellDimension = px;
-                    }
-
-                    @Override
-                    public void run() {
-                        int digit = _board[_row][_col];
-                        if (digit == 0)
-                            _counter++;
-                        String strDigit = String.valueOf(digit);
-                        TextView cell = CreateTextViewCell(_row, _col, strDigit, _cellDimension);
-
-                        Message completeMessage = mHandler.obtainMessage(1, cell);
-                        completeMessage.sendToTarget();
-                    }
+                CreateCell (int digit, int row, int col, boolean isCellConst, int px){
+                    _digit = digit;
+                    _row = row;
+                    _col = col;
+                    _isCellConst = isCellConst;
+                    _cellDimension = px;
                 }
-                Thread t = new Thread(new CreateCell(_board, row, col, cellDimension));
-                t.start();
+
+                @Override
+                public void run() {
+                    if (_digit == 0)
+                        _counter++;
+                    String strDigit = String.valueOf(_digit);
+                    TextView cell = CreateTextViewCell(_row, _col, strDigit, _isCellConst, _cellDimension);
+
+                    Message completeMessage = mHandler.obtainMessage(1, cell);
+                    completeMessage.sendToTarget();
+                }
             }
+            CellData item = _cells.get(index);
+            Thread t = new Thread(new CreateCell(item.getCellDigit(), item.getRow(), item.getColumn(), item.getIsCellConst(), cellDimension));
+            t.start();
         }
     }
 
-    private TextView CreateTextViewCell(int row, int col, String strDigit, int cellDimension) {
+    private TextView CreateTextViewCell(int row, int col, String strDigit, boolean isCellConst, int cellDimension) {
+        Log.d(TAG, "CreateTextViewCell started");
+
         try{
             LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             RelativeLayout layout = (RelativeLayout)inflater.inflate(R.layout.cell_view, null);
@@ -427,6 +494,13 @@ public class BoardActivity extends AppCompatActivity {
             cell.setHeight(cellDimension);
             layout.removeViewAt(0);
             cell.setLayoutParams(params);
+
+            if (isCellConst){
+                cell.setTextColor(Color.GRAY);
+            }
+            else{
+                cell.setTextColor(Color.BLACK);
+            }
 
             String cellTag = String.valueOf(row) + String.valueOf(col);
 
@@ -477,6 +551,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void OnCellClicked(TextView view) {
+        Log.d(TAG, "OnCellClicked started");
+
         if (lastSelectedCell != null){
             char backgroundState = String.valueOf(lastSelectedCell.getTag()).charAt(2);
             if (backgroundState == '1'){

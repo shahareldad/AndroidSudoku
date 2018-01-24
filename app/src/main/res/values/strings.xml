@@ -3,6 +3,7 @@
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>
+    <string name="load">Load last game</string>
     <string name="solve">Solve</string>
     <string name="gameOver">Game Over</string>
     <string name="youWin">You win!</string>
