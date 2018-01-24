@@ -16,10 +16,13 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -38,15 +41,11 @@ public class BoardActivity extends AppCompatActivity {
     private TextView lastSelectedCell = null;
     private int[][] _board = null;
     private int _screenWidth = 0;
-    private int _screenHeight = 0;
     private Integer _level;
     private SudokuSolver _solver = null;
-    private int[][] _solvedBoard = null;
     private int _counter = 0;
     private GridLayout _mainGridLayout = null;
     private ArrayList<CellData> _cells = null;
-
-    private AdView _adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +54,7 @@ public class BoardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_board);
 
-        _adView = findViewById(R.id.adView);
+        AdView _adView = findViewById(R.id.adView);
         AdRequest request = new AdRequest.Builder().build();
         _adView.loadAd(request);
 
@@ -64,7 +63,6 @@ public class BoardActivity extends AppCompatActivity {
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
         _screenWidth = size.x;
-        _screenHeight = size.y;
 
         _mainGridLayout = findViewById(R.id.mainGridLayout);
         mHandler = new Handler(Looper.getMainLooper()){
@@ -80,12 +78,12 @@ public class BoardActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        Log.d(TAG, "onStop onResume");
+        Log.d(TAG, "onResume Started");
         super.onResume();
 
         if (_level == -1) {
             _level = 1;
-            _cells = TryLoadSavedGame();
+            TryLoadSavedGame();
         }
         if (_cells != null){
             StartNewGame(_mainGridLayout, _level, false);
@@ -105,10 +103,9 @@ public class BoardActivity extends AppCompatActivity {
         SaveCurrentBoardState();
     }
 
-    private ArrayList<CellData> TryLoadSavedGame() {
+    private void TryLoadSavedGame() {
         Log.d(TAG, "TryLoadSavedGame started");
 
-        byte[] fileData = null;
         BufferedReader br = null;
         StringBuilder builder = null;
         InputStream stream = null;
@@ -118,7 +115,7 @@ public class BoardActivity extends AppCompatActivity {
             br = new BufferedReader(new InputStreamReader(stream));
             builder = new StringBuilder();
 
-            String line = "";
+            String line;
             while ((line = br.readLine()) != null){
                 builder.append(line);
             }
@@ -144,29 +141,23 @@ public class BoardActivity extends AppCompatActivity {
             }
         }
 
-        if (fileData == null){
-            return null;
-        }
-
+        String result = builder.toString();
         Gson gson = new GsonBuilder().create();
-        ArrayList<CellData> cells = new ArrayList<>();
-        cells = gson.fromJson(builder.toString(), cells.getClass());
+        _cells = gson.fromJson(result, new TypeToken<ArrayList<CellData>>(){}.getType());
 
         _board = new int[9][9];
-        int length = cells.size();
+        int length = _cells.size();
         if (length != 81){
             Log.e(TAG, "TryLoadSavedGame.Length of loaded game array is not 81. Something went wrong on last save. Stopping load process.");
-            return null;
+            return;
         }
         for (int index = 0; index < length; index++){
-            CellData temp = cells.get(index);
+            CellData temp = _cells.get(index);
             if (temp.getIsCellConst())
                 _board[temp.getRow()][temp.getColumn()] = temp.getCellDigit();
             else
                 _board[temp.getRow()][temp.getColumn()] = 0;
         }
-
-        return cells;
     }
 
     private void SaveCurrentBoardState() {
@@ -212,8 +203,8 @@ public class BoardActivity extends AppCompatActivity {
             if (fos != null){
                 try {
                     fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
                 }
             }
         }
@@ -333,7 +324,7 @@ public class BoardActivity extends AppCompatActivity {
 
         int[][] temp = deepCopy(_board);
         _solver.Solve(temp);
-        _solvedBoard = _solver.GetSolvedBoard();
+        int[][] _solvedBoard = _solver.GetSolvedBoard();
 
         boolean isWinStateTrue = true;
         for (int index = 0; index < 81; index++){
