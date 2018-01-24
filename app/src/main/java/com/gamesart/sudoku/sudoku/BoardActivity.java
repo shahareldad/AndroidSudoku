@@ -83,7 +83,6 @@ public class BoardActivity extends AppCompatActivity {
         else {
             TryLoadSavedGame();
             StartNewGame(_mainGridLayout, false, false);
-            //_loadGame = false;
         }
 
         InitKeyboard(_mainGridLayout);
