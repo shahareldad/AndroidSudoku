@@ -50,7 +50,6 @@ public class BoardActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate started");
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_board);
@@ -79,11 +78,11 @@ public class BoardActivity extends AppCompatActivity {
 
         if (!_loadGame) {
             _cells = new ArrayList<>(81);
-            StartNewGame(_mainGridLayout, _level, true);
+            StartNewGame(_mainGridLayout, true, false);
         }
         else {
             TryLoadSavedGame();
-            StartNewGame(_mainGridLayout, _level, false);
+            StartNewGame(_mainGridLayout, false, false);
             //_loadGame = false;
         }
 
@@ -92,14 +91,12 @@ public class BoardActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "onPause started");
         super.onPause();
 
         SaveCurrentBoardState();
     }
 
     private void TryLoadSavedGame() {
-        Log.d(TAG, "TryLoadSavedGame started");
 
         BufferedReader br = null;
         StringBuilder builder = null;
@@ -117,7 +114,6 @@ public class BoardActivity extends AppCompatActivity {
             stream.close();
         }
         catch (IOException ex){
-            Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
         }
         finally {
             if (stream != null) {
@@ -136,6 +132,10 @@ public class BoardActivity extends AppCompatActivity {
             }
         }
 
+        if (builder == null) {
+            return;
+        }
+
         String result = builder.toString();
         Gson gson = new GsonBuilder().create();
         _cells = gson.fromJson(result, new TypeToken<ArrayList<CellData>>(){}.getType());
@@ -143,7 +143,6 @@ public class BoardActivity extends AppCompatActivity {
         _board = new int[9][9];
         int length = _cells.size();
         if (length != 81){
-            Log.e(TAG, "TryLoadSavedGame.Length of loaded game array is not 81. Something went wrong on last save. Stopping load process.");
             return;
         }
         for (int index = 0; index < length; index++){
@@ -156,7 +155,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SaveCurrentBoardState() {
-        Log.d(TAG, "SaveCurrentBoardState started");
 
         ArrayList<CellData> cells = new ArrayList<>(81);
 
@@ -183,7 +181,6 @@ public class BoardActivity extends AppCompatActivity {
 
         Gson gson = new GsonBuilder().create();
         String result = gson.toJson(cells);
-        Log.d(TAG, "Gsoned the CellData list: " + result);
 
         FileOutputStream fos = null;
         try{
@@ -192,10 +189,8 @@ public class BoardActivity extends AppCompatActivity {
             fos.close();
         }
         catch (FileNotFoundException ex){
-            Log.e(TAG, "SaveCurrentBoardState.FileNotFoundException: " + ex.getMessage());
         }
         catch (IOException ex){
-            Log.e(TAG, "SaveCurrentBoardState.IOException: " + ex.getMessage());
         }
         finally {
             if (fos != null){
@@ -209,7 +204,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void InitKeyboard(final GridLayout mainGridLayout) {
-        Log.d(TAG, "InitKeyboard started");
 
         GridLayout keyboardGrid = findViewById(R.id.gameKeyboard);
         int length = keyboardGrid.getChildCount();
@@ -225,7 +219,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SetKeyboardKeysWidth(int numericWidth, int commandWidth, TextView keyboardKey) {
-        Log.d(TAG, "SetKeyboardKeysWidth started");
 
         String text = String.valueOf(keyboardKey.getText());
         switch (text){
@@ -249,7 +242,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SetKeyboardClick(final GridLayout mainGridLayout, final TextView keyboardKey) {
-        Log.d(TAG, "SetKeyboardClick started");
 
         keyboardKey.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -278,10 +270,10 @@ public class BoardActivity extends AppCompatActivity {
                         CaseClearSelected(currentText, isConst);
                         break;
                     case "New Game":
-                        StartNewGame(mainGridLayout, _level, true);
+                        StartNewGame(mainGridLayout, true, false);
                         break;
                     case "Reset":
-                        StartNewGame(mainGridLayout, _level, false);
+                        StartNewGame(mainGridLayout, false, true);
                         break;
                 }
             }
@@ -289,7 +281,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CaseClearSelected(String currentText, char isConst) {
-        Log.d(TAG, "CaseClearSelected started");
 
         if (lastSelectedCell == null)
             return;
@@ -302,7 +293,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CaseDigitSelected(String text, String currentText, char isConst, GridLayout mainGridLayout) {
-        Log.d(TAG, "CaseDigitSelected started");
 
         if (lastSelectedCell == null)
             return;
@@ -315,7 +305,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CheckWinState(final GridLayout mainGridLayout){
-        Log.d(TAG, "CheckWinState started");
 
         if (_counter != 0)
             return;
@@ -362,7 +351,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void ShowAlertDialogOnGameOver(final GridLayout mainGridLayout, AlertDialog.Builder builder, final String[] items) {
-        Log.d(TAG, "ShowAlertDialogOnGameOver started");
 
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
@@ -376,16 +364,15 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void GameOverMenuItemClicked(DialogInterface dialogInterface, String selection, GridLayout mainGridLayout) {
-        Log.d(TAG, "GameOverMenuItemClicked started");
 
         if (selection.equals(getString(R.string.startNew))){
-            StartNewGame(mainGridLayout, _level, true);
+            StartNewGame(mainGridLayout, true, false);
         }
         if (selection.equals(getString(R.string.selectLevel))){
             finish();
         }
         if (selection.equals(getString(R.string.resetCurrent))){
-            StartNewGame(mainGridLayout, _level, false);
+            StartNewGame(mainGridLayout, false, true);
         }
         if (selection.equals(getString(R.string.continueCurrent))){
             dialogInterface.dismiss();
@@ -393,7 +380,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private int[][] deepCopy(int[][] original) {
-        Log.d(TAG, "deepCopy started");
 
         if (original == null) {
             return null;
@@ -406,15 +392,17 @@ public class BoardActivity extends AppCompatActivity {
         return result;
     }
 
-    private void StartNewGame(GridLayout mainGridLayout, int level, boolean newBoard) {
-        Log.d(TAG, "StartNewGame started");
+    private void StartNewGame(GridLayout mainGridLayout, boolean newBoard, boolean isResetRequested) {
 
         mainGridLayout.removeAllViews();
 
-        if (newBoard){
+        if (newBoard || (_cells == null)){
             SudokuGenerator generator = new SudokuGenerator();
-            _board = generator.GetBoard(level);
-            _cells.clear();
+            _board = generator.GetBoard(_level);
+            if (_cells == null)
+                _cells = new ArrayList<>();
+            else
+                _cells.clear();
             for (int row = 0; row < 9; row++){
                 for (int col = 0; col < 9; col++){
                     CellData item = new CellData();
@@ -431,7 +419,6 @@ public class BoardActivity extends AppCompatActivity {
         }
 
         int cellDimension = _screenWidth / 9;
-        Log.d("BoardActivity", "cellDimension Pixel measurement: " + String.valueOf(cellDimension));
 
         for(int index = 0; index < 81; index++){
             class CreateCell implements Runnable{
@@ -462,13 +449,14 @@ public class BoardActivity extends AppCompatActivity {
                 }
             }
             CellData item = _cells.get(index);
+            if (isResetRequested && item.getIsCellConst().equals("0"))
+                item.setCellDigit(0);
             Thread t = new Thread(new CreateCell(item.getCellDigit(), item.getRow(), item.getColumn(), item.getIsCellConst(), cellDimension));
             t.start();
         }
     }
 
     private TextView CreateTextViewCell(int row, int col, String strDigit, String isCellConst, int cellDimension) {
-        Log.d(TAG, "CreateTextViewCell started");
 
         try{
             LayoutInflater inflater = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -533,13 +521,11 @@ public class BoardActivity extends AppCompatActivity {
 
             return cell;
         }catch (Exception ex){
-            Log.e(TAG, "CreateTextViewCell Failed: " + ex.getMessage());
             return null;
         }
     }
 
     private void OnCellClicked(TextView view) {
-        Log.d(TAG, "OnCellClicked started");
 
         if (lastSelectedCell != null){
             char backgroundState = String.valueOf(lastSelectedCell.getTag()).charAt(2);
