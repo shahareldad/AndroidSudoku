@@ -8,7 +8,7 @@ public class CellData {
     private int CellDigit;
     private int Row;
     private int Column;
-    private boolean IsCellConst;
+    private String IsCellConst;
 
     public int getCellDigit() {
         return CellDigit;
@@ -34,11 +34,11 @@ public class CellData {
         Column = column;
     }
 
-    public boolean getIsCellConst() {
+    public String getIsCellConst() {
         return IsCellConst;
     }
 
-    public void setIsCellConst(boolean cellConst) {
+    public void setIsCellConst(String cellConst) {
         IsCellConst = cellConst;
     }
 }

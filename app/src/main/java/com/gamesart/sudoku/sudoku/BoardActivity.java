@@ -42,6 +42,7 @@ public class BoardActivity extends AppCompatActivity {
     private int[][] _board = null;
     private int _screenWidth = 0;
     private Integer _level;
+    private boolean _loadGame;
     private SudokuSolver _solver = null;
     private int _counter = 0;
     private GridLayout _mainGridLayout = null;
@@ -50,8 +51,8 @@ public class BoardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate started");
-
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_board);
 
         AdView _adView = findViewById(R.id.adView);
@@ -59,6 +60,7 @@ public class BoardActivity extends AppCompatActivity {
         _adView.loadAd(request);
 
         _level = Integer.valueOf(getIntent().getIntExtra(FirstViewActivity.LevelParamName, 1));
+        _loadGame = Boolean.valueOf(getIntent().getBooleanExtra(FirstViewActivity.LoadGameParamName, false));
 
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
@@ -74,23 +76,15 @@ public class BoardActivity extends AppCompatActivity {
         };
 
         _solver = new SudokuSolver();
-    }
 
-    @Override
-    protected void onResume() {
-        Log.d(TAG, "onResume Started");
-        super.onResume();
-
-        if (_level == -1) {
-            _level = 1;
-            TryLoadSavedGame();
-        }
-        if (_cells != null){
-            StartNewGame(_mainGridLayout, _level, false);
-        }
-        else{
+        if (!_loadGame) {
             _cells = new ArrayList<>(81);
             StartNewGame(_mainGridLayout, _level, true);
+        }
+        else {
+            TryLoadSavedGame();
+            StartNewGame(_mainGridLayout, _level, false);
+            //_loadGame = false;
         }
 
         InitKeyboard(_mainGridLayout);
@@ -98,8 +92,9 @@ public class BoardActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        Log.d(TAG, "onStop started");
+        Log.d(TAG, "onPause started");
         super.onPause();
+
         SaveCurrentBoardState();
     }
 
@@ -153,7 +148,7 @@ public class BoardActivity extends AppCompatActivity {
         }
         for (int index = 0; index < length; index++){
             CellData temp = _cells.get(index);
-            if (temp.getIsCellConst())
+            if (temp.getIsCellConst().equals("1"))
                 _board[temp.getRow()][temp.getColumn()] = temp.getCellDigit();
             else
                 _board[temp.getRow()][temp.getColumn()] = 0;
@@ -165,6 +160,7 @@ public class BoardActivity extends AppCompatActivity {
 
         ArrayList<CellData> cells = new ArrayList<>(81);
 
+        String Tags = "";
         for (int index = 0; index < 81; index++){
             CellData item = new CellData();
             TextView cell = (TextView)_mainGridLayout.getChildAt(index);
@@ -175,14 +171,16 @@ public class BoardActivity extends AppCompatActivity {
                 item.setCellDigit(Integer.valueOf(cellStringValue));
 
             String tag = String.valueOf(cell.getTag());
+            Tags += tag + "\n";
             int row = Character.getNumericValue(tag.charAt(0));
             int col = Character.getNumericValue(tag.charAt(1));
-            int isConst = Character.getNumericValue(tag.charAt(2));
+            String isConst = String.valueOf(tag.charAt(3));
             item.setRow(row);
             item.setColumn(col);
-            item.setIsCellConst(isConst == 1);
+            item.setIsCellConst(isConst);
             cells.add(item);
         }
+
         Gson gson = new GsonBuilder().create();
         String result = gson.toJson(cells);
         Log.d(TAG, "Gsoned the CellData list: " + result);
@@ -424,9 +422,9 @@ public class BoardActivity extends AppCompatActivity {
                     item.setColumn(col);
                     item.setCellDigit(_board[row][col]);
                     if (_board[row][col] == 0)
-                        item.setIsCellConst(false);
+                        item.setIsCellConst("0");
                     else
-                        item.setIsCellConst(true);
+                        item.setIsCellConst("1");
                     _cells.add(item);
                 }
             }
@@ -442,9 +440,9 @@ public class BoardActivity extends AppCompatActivity {
                 private final int _row;
                 private final int _col;
                 private final int _cellDimension;
-                private final boolean _isCellConst;
+                private final String _isCellConst;
 
-                CreateCell (int digit, int row, int col, boolean isCellConst, int px){
+                CreateCell (int digit, int row, int col, String isCellConst, int px){
                     _digit = digit;
                     _row = row;
                     _col = col;
@@ -469,7 +467,7 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    private TextView CreateTextViewCell(int row, int col, String strDigit, boolean isCellConst, int cellDimension) {
+    private TextView CreateTextViewCell(int row, int col, String strDigit, String isCellConst, int cellDimension) {
         Log.d(TAG, "CreateTextViewCell started");
 
         try{
@@ -486,7 +484,7 @@ public class BoardActivity extends AppCompatActivity {
             layout.removeViewAt(0);
             cell.setLayoutParams(params);
 
-            if (isCellConst){
+            if (isCellConst.equals("1")){
                 cell.setTextColor(Color.GRAY);
             }
             else{
@@ -517,14 +515,13 @@ public class BoardActivity extends AppCompatActivity {
             }
 
             if (!strDigit.equals("0")) {
-                cell.setTextColor(Color.GRAY);
                 cell.setText(strDigit, TextView.BufferType.EDITABLE);
-                cellTag += "1";
             }
             else{
                 cell.setTextColor(Color.BLACK);
-                cellTag += "0";
             }
+
+            cellTag += isCellConst;
             cell.setTag(cellTag);
 
             cell.setOnClickListener(new View.OnClickListener() {

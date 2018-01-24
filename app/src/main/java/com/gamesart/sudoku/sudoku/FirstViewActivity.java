@@ -13,6 +13,7 @@ import com.google.android.gms.ads.MobileAds;
 public class FirstViewActivity extends AppCompatActivity {
 
     public static String LevelParamName = "level";
+    public static String LoadGameParamName = "loadGame";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,35 +38,36 @@ public class FirstViewActivity extends AppCompatActivity {
         easyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startNewGameByLevel(1);
+                startNewGameByLevel(1, false);
             }
         });
 
         mediumBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startNewGameByLevel(2);
+                startNewGameByLevel(2, false);
             }
         });
 
         hardBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startNewGameByLevel(3);
+                startNewGameByLevel(3, false);
             }
         });
 
         loadGame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startNewGameByLevel(-1);
+                startNewGameByLevel(1, true);
             }
         });
     }
 
-    private void startNewGameByLevel(int level) {
+    private void startNewGameByLevel(int level, boolean loadGame) {
         Intent i = new Intent(FirstViewActivity.this, BoardActivity.class);
         i.putExtra(LevelParamName, level);
+        i.putExtra(LoadGameParamName, loadGame);
         startActivity(i);
     }
 }
