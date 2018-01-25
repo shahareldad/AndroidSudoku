@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -40,6 +41,7 @@ public class BoardActivity extends AppCompatActivity {
     private Handler mHandler = null;
     private TextView lastSelectedCell = null;
     private int[][] _board = null;
+    private TextView[][] _textViews = null;
     private int _screenWidth = 0;
     private Integer _level;
     private boolean _loadGame;
@@ -158,24 +160,24 @@ public class BoardActivity extends AppCompatActivity {
         ArrayList<CellData> cells = new ArrayList<>(81);
 
         String Tags = "";
-        for (int index = 0; index < 81; index++){
-            CellData item = new CellData();
-            TextView cell = (TextView)_mainGridLayout.getChildAt(index);
-            String cellStringValue = cell.getText().toString();
-            if (cellStringValue.equals(""))
-                item.setCellDigit(0);
-            else
-                item.setCellDigit(Integer.valueOf(cellStringValue));
+        for (int row = 0; row < 9; row++) {
+            for (int col = 0; col < 9; col++) {
+                CellData item = new CellData();
+                TextView cell = _textViews[row][col];
+                String cellStringValue = cell.getText().toString();
+                if (cellStringValue.equals(""))
+                    item.setCellDigit(0);
+                else
+                    item.setCellDigit(Integer.valueOf(cellStringValue));
 
-            String tag = String.valueOf(cell.getTag());
-            Tags += tag + "\n";
-            int row = Character.getNumericValue(tag.charAt(0));
-            int col = Character.getNumericValue(tag.charAt(1));
-            String isConst = String.valueOf(tag.charAt(3));
-            item.setRow(row);
-            item.setColumn(col);
-            item.setIsCellConst(isConst);
-            cells.add(item);
+                String tag = String.valueOf(cell.getTag());
+                Tags += tag + "\n";
+                String isConst = String.valueOf(tag.charAt(3));
+                item.setRow(row);
+                item.setColumn(col);
+                item.setIsCellConst(isConst);
+                cells.add(item);
+            }
         }
 
         Gson gson = new GsonBuilder().create();
@@ -300,6 +302,7 @@ public class BoardActivity extends AppCompatActivity {
         if (currentText.equals(""))
             _counter--;
         lastSelectedCell.setText(text, TextView.BufferType.EDITABLE);
+        OnCellClicked(lastSelectedCell);
         CheckWinState(mainGridLayout);
     }
 
@@ -313,18 +316,15 @@ public class BoardActivity extends AppCompatActivity {
         int[][] _solvedBoard = _solver.GetSolvedBoard();
 
         boolean isWinStateTrue = true;
-        for (int index = 0; index < 81; index++){
-            TextView cell = (TextView)mainGridLayout.getChildAt(index);
-            String cellStringValue = cell.getText().toString();
-            int cellValue = Integer.valueOf(cellStringValue);
-            String tag = String.valueOf(cell.getTag());
-            int row = Character.getNumericValue(tag.charAt(0));
-            int col = Character.getNumericValue(tag.charAt(1));
-            int solvedDigit = _solvedBoard[row][col];
-
-            if (cellValue != solvedDigit){
-                isWinStateTrue = false;
-                break;
+        for (int row = 0; row < 9; row++){
+            for (int col = 0; col < 9; col++){
+                String cellStringValue = _textViews[row][col].getText().toString();
+                int cellValue = Integer.valueOf(cellStringValue);
+                int solvedDigit = _solvedBoard[row][col];
+                if (cellValue != solvedDigit){
+                    isWinStateTrue = false;
+                    break;
+                }
             }
         }
 
@@ -419,6 +419,8 @@ public class BoardActivity extends AppCompatActivity {
 
         int cellDimension = _screenWidth / 9;
 
+        if (_textViews == null)
+            _textViews = new TextView[9][9];
         for(int index = 0; index < 81; index++){
             class CreateCell implements Runnable{
 
@@ -442,7 +444,7 @@ public class BoardActivity extends AppCompatActivity {
                         _counter++;
                     String strDigit = String.valueOf(_digit);
                     TextView cell = CreateTextViewCell(_row, _col, strDigit, _isCellConst, _cellDimension);
-
+                    _textViews[_row][_col] = cell;
                     Message completeMessage = mHandler.obtainMessage(1, cell);
                     completeMessage.sendToTarget();
                 }
@@ -526,23 +528,37 @@ public class BoardActivity extends AppCompatActivity {
 
     private void OnCellClicked(TextView view) {
 
-        if (lastSelectedCell != null){
-            char backgroundState = String.valueOf(lastSelectedCell.getTag()).charAt(2);
-            if (backgroundState == '1'){
-                lastSelectedCell.setBackground(getDrawable(R.drawable.sudoku_cell));
-            }
-            else{
-                lastSelectedCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
+        String selectedRow = String.valueOf(String.valueOf(view.getTag()).charAt(0));
+        String selectedCol = String.valueOf(String.valueOf(view.getTag()).charAt(1));
+        String selectedCellDigit = String.valueOf(view.getText());
+
+        for (int row = 0; row < 9; row++) {
+            for (int col = 0; col < 9; col++) {
+                TextView currentWorkCell = _textViews[row][col];
+                if (selectedRow.equals(String.valueOf(row)) || selectedCol.equals(String.valueOf(col))){
+                    currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
+                    if (currentWorkCell == view){
+                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected));
+                    }
+                }
+                else{
+                    String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
+                    if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
+                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number));
+                    }
+                    else{
+                        char backgroundState = String.valueOf(currentWorkCell.getTag()).charAt(2);
+                        if (backgroundState == '1'){
+                            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell));
+                        }
+                        else{
+                            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
+                        }
+                    }
+                }
             }
         }
 
-        char backgroundState = String.valueOf(view.getTag()).charAt(2);
-        if (backgroundState == '1'){
-            view.setBackground(getDrawable(R.drawable.sudoku_cell_selected));
-        }
-        else{
-            view.setBackground(getDrawable(R.drawable.sudoku_cell_alt_selected));
-        }
         lastSelectedCell = view;
 
         GridLayout grid = findViewById(R.id.gameKeyboard);
