@@ -291,6 +291,7 @@ public class BoardActivity extends AppCompatActivity {
             return;
         _counter++;
         lastSelectedCell.setText("", TextView.BufferType.EDITABLE);
+        OnCellClicked(lastSelectedCell);
     }
 
     private void CaseDigitSelected(String text, String currentText, char isConst, GridLayout mainGridLayout) {
@@ -535,14 +536,18 @@ public class BoardActivity extends AppCompatActivity {
         for (int row = 0; row < 9; row++) {
             for (int col = 0; col < 9; col++) {
                 TextView currentWorkCell = _textViews[row][col];
+                String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
                 if (selectedRow.equals(String.valueOf(row)) || selectedCol.equals(String.valueOf(col))){
                     currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
                     if (currentWorkCell == view){
                         currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected));
+                        continue;
+                    }
+                    if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
+                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col_error));
                     }
                 }
                 else{
-                    String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
                     if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
                         currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number));
                     }
