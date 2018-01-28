@@ -70,7 +70,7 @@ public class SudokuGenerator {
 
     private int GetMaskingValuePerLevel(int level)
     {
-        int result = 0;
+        int result;
         switch (level)
         {
             case 0:             // Difficulty level very easy
@@ -78,7 +78,7 @@ public class SudokuGenerator {
                 break;
 
             case 1:                 // Difficulty level easy
-                result = new Random().nextInt(13) + 41;
+                result = 79;//new Random().nextInt(13) + 41;
                 break;
 
             case 2:               // Difficulty level medium
