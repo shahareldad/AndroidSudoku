@@ -7,6 +7,9 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.GridLayout;
@@ -395,6 +398,7 @@ public class BoardActivity extends AppCompatActivity {
 
     private void StartNewGame(boolean newBoard, boolean isResetRequested) {
 
+        _counter = 0;
         if (newBoard || (_cells == null)){
             SudokuGenerator generator = new SudokuGenerator();
             _board = generator.GetBoard(_level);
@@ -418,43 +422,27 @@ public class BoardActivity extends AppCompatActivity {
         }
 
         int cellsCount = _cells.size();
-
         for(int index = 0; index < cellsCount; index++){
-            class CreateCell implements Runnable{
 
-                private final int _digit;
-                private final int _row;
-                private final int _col;
-                private final Activity _parent;
-
-                CreateCell (Activity parent, int digit, int row, int col){
-                    _digit = digit;
-                    _row = row;
-                    _col = col;
-                    _parent = parent;
-                }
-
-                @Override
-                public void run() {
-                    UpdateTextViewCell(_textViews[_row][_col], _digit);
-                    if (_digit == 0) {
-                        _textViews[_row][_col].setTextColor(Color.BLACK);
-                        _counter++;
-                        return;
-                    }
-                    _textViews[_row][_col].setText(String.valueOf(_digit));
-                    _textViews[_row][_col].setTextColor(Color.GRAY);
-                }
-            }
             CellData item = _cells.get(index);
             if (isResetRequested && item.getIsCellConst().equals("0"))
                 item.setCellDigit(0);
-            Thread t = new Thread(new CreateCell(this, item.getCellDigit(), item.getRow(), item.getColumn()));
-            t.start();
+            int digit = item.getCellDigit();
+            int row = item.getRow();
+            int col = item.getColumn();
+            UpdateTextViewCell(_textViews[row][col], digit, row, col);
+            if (item.getIsCellConst().equals("0")) {
+                _textViews[row][col].setTextColor(Color.BLACK);
+                _textViews[row][col].setText("");
+                _counter++;
+                continue;
+            }
+            _textViews[row][col].setText(String.valueOf(digit));
+            _textViews[row][col].setTextColor(Color.GRAY);
         }
     }
 
-    private void UpdateTextViewCell(TextView cell, int digit) {
+    private void UpdateTextViewCell(TextView cell, int digit, int row, int col) {
 
         String cellTag = String.valueOf(cell.getTag());
         if (cellTag.length() == 4){
@@ -467,6 +455,27 @@ public class BoardActivity extends AppCompatActivity {
             cellTag += "1";
         }
         cell.setTag(cellTag);
+
+        if ((row >= 0 && row <= 2) || (row >= 6 && row <= 8)){
+            if (col >= 3 && col <= 5){
+                cell.setBackground(getDrawable(R.drawable.sudoku_cell));
+                cellTag += "1";
+            }
+            else{
+                cell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
+                cellTag += "0";
+            }
+        }
+        else{
+            if (col < 3 || col > 5){
+                cell.setBackground(getDrawable(R.drawable.sudoku_cell));
+                cellTag += "1";
+            }
+            else{
+                cell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
+                cellTag += "0";
+            }
+        }
 
         cell.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -78,7 +78,7 @@ public class SudokuGenerator {
                 break;
 
             case 1:                 // Difficulty level easy
-                result = 79;//new Random().nextInt(13) + 41;
+                result = new Random().nextInt(13) + 41;
                 break;
 
             case 2:               // Difficulty level medium
