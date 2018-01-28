@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
@@ -180,6 +181,7 @@ public class BoardActivity extends AppCompatActivity {
                 item.setRow(row);
                 item.setColumn(col);
                 item.setIsCellConst(isConst);
+                Log.d(TAG, "SaveCurrentBoardState => row: " + row + " col: " + col + " isConst: " + isConst + " digit: " + cellStringValue);
                 cells.add(item);
             }
         }
@@ -400,6 +402,7 @@ public class BoardActivity extends AppCompatActivity {
 
         _counter = 0;
         if (newBoard || (_cells == null)){
+            Log.d(TAG, "StartNewGame => Starting a new game");
             SudokuGenerator generator = new SudokuGenerator();
             _board = generator.GetBoard(_level);
             if (_cells == null)
@@ -430,10 +433,14 @@ public class BoardActivity extends AppCompatActivity {
             int digit = item.getCellDigit();
             int row = item.getRow();
             int col = item.getColumn();
+            Log.d(TAG, "StartNewGame => row: " + row + " col: " + col + " isConst: " + item.getIsCellConst() + " digit: " + digit);
             UpdateTextViewCell(_textViews[row][col], digit, row, col);
             if (item.getIsCellConst().equals("0")) {
                 _textViews[row][col].setTextColor(Color.BLACK);
-                _textViews[row][col].setText("");
+                if (digit != 0)
+                    _textViews[row][col].setText(String.valueOf(digit));
+                else
+                    _textViews[row][col].setText("");
                 _counter++;
                 continue;
             }
