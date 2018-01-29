@@ -496,12 +496,16 @@ public class BoardActivity extends AppCompatActivity {
         String selectedRow = String.valueOf(String.valueOf(view.getTag()).charAt(0));
         String selectedCol = String.valueOf(String.valueOf(view.getTag()).charAt(1));
         String selectedCellDigit = String.valueOf(view.getText());
-        String isCellConst = String.valueOf(String.valueOf(view.getTag()).charAt(3)).equals("1") ? "true" : "false";
+        int selectedRowInt = Integer.valueOf(selectedRow);
+        int selectedColInt = Integer.valueOf(selectedCol);
+        int sectionRowStart = selectedRowInt / 3 * 3;
+        int sectionColStart = selectedColInt / 3 * 3;
 
         for (int row = 0; row < _subgridColRowLength; row++) {
             for (int col = 0; col < _subgridColRowLength; col++) {
                 TextView currentWorkCell = _textViews[row][col];
                 String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
+
                 if (selectedRow.equals(String.valueOf(row)) || selectedCol.equals(String.valueOf(col))){
                     currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
                     if (currentWorkCell == view){
@@ -515,6 +519,11 @@ public class BoardActivity extends AppCompatActivity {
                 else{
                     if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
                         currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number));
+                        if ((row >= sectionRowStart && row <= (sectionRowStart + 2)) && (col >= sectionColStart && col <= (sectionColStart + 2))){
+                            if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
+                                currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number_error));
+                            }
+                        }
                     }
                     else{
                         char backgroundState = String.valueOf(currentWorkCell.getTag()).charAt(2);
