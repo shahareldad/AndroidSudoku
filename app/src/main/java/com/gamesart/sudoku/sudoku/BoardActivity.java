@@ -277,10 +277,10 @@ public class BoardActivity extends AppCompatActivity {
                         CaseClearSelected(currentText, isConst);
                         break;
                     case "New Game":
-                        StartNewGame(true, false);
+                        NewGameRestartClicked(true, false);
                         break;
                     case "Reset":
-                        StartNewGame(false, true);
+                        NewGameRestartClicked(false, true);
                         break;
                 }
             }
@@ -396,6 +396,25 @@ public class BoardActivity extends AppCompatActivity {
             result[i] = Arrays.copyOf(original[i], original[i].length);
         }
         return result;
+    }
+
+    private void NewGameRestartClicked(final boolean newBoard, final boolean isResetRequested){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("New game / Restart");
+        builder.setMessage("Are you sure?");
+        builder.setPositiveButton("Yepp", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                StartNewGame(newBoard, isResetRequested);
+            }
+        });
+        builder.setNegativeButton("Nope", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // Do nothing
+            }
+        });
+        builder.create().show();
     }
 
     private void StartNewGame(boolean newBoard, boolean isResetRequested) {
