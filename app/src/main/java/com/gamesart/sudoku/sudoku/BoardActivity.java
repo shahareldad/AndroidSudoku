@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 
 public class BoardActivity extends AppCompatActivity {
 
@@ -319,21 +320,7 @@ public class BoardActivity extends AppCompatActivity {
             return;
 
         int[][] temp = deepCopy(_board);
-        _solver.Solve(temp);
-        int[][] _solvedBoard = _solver.GetSolvedBoard();
-
-        boolean isWinStateTrue = true;
-        for (int row = 0; row < _subgridColRowLength; row++){
-            for (int col = 0; col < _subgridColRowLength; col++){
-                String cellStringValue = _textViews[row][col].getText().toString();
-                int cellValue = Integer.valueOf(cellStringValue);
-                int solvedDigit = _solvedBoard[row][col];
-                if (cellValue != solvedDigit){
-                    isWinStateTrue = false;
-                    break;
-                }
-            }
-        }
+        boolean isWinStateTrue = isValid(temp);
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (isWinStateTrue) {
@@ -354,6 +341,39 @@ public class BoardActivity extends AppCompatActivity {
             };
             ShowAlertDialogOnGameOver(builder, items);
         }
+    }
+
+    private boolean isValid(int[][] board) {
+        //Check rows and columns
+        for (int i = 0; i < board.length; i++) {
+            BitSet bsRow = new BitSet(9);
+            BitSet bsColumn = new BitSet(9);
+            for (int j = 0; j < board[i].length; j++) {
+                if (board[i][j] == 0 || board[j][i] == 0) continue;
+                if (bsRow.get(board[i][j] - 1) || bsColumn.get(board[j][i] - 1))
+                    return false;
+                else {
+                    bsRow.set(board[i][j] - 1);
+                    bsColumn.set(board[j][i] - 1);
+                }
+            }
+        }
+        //Check within 3 x 3 grid
+        for (int rowOffset = 0; rowOffset < 9; rowOffset += 3) {
+            for (int columnOffset = 0; columnOffset < 9; columnOffset += 3) {
+                BitSet threeByThree = new BitSet(9);
+                for (int i = rowOffset; i < rowOffset + 3; i++) {
+                    for (int j = columnOffset; j < columnOffset + 3; j++) {
+                        if (board[i][j] == 0) continue;
+                        if (threeByThree.get(board[i][j] - 1))
+                            return false;
+                        else
+                            threeByThree.set(board[i][j] - 1);
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     private void ShowAlertDialogOnGameOver(AlertDialog.Builder builder, final String[] items) {
