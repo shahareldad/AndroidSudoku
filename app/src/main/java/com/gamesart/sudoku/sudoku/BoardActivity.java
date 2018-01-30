@@ -1,22 +1,17 @@
 package com.gamesart.sudoku.sudoku;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -320,7 +315,7 @@ public class BoardActivity extends AppCompatActivity {
             return;
 
         int[][] temp = deepCopy(_board);
-        boolean isWinStateTrue = isValid(temp);
+        boolean isWinStateTrue = isUserBoardValid(temp);
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (isWinStateTrue) {
@@ -343,7 +338,7 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isValid(int[][] board) {
+    private boolean isUserBoardValid(int[][] board) {
         //Check rows and columns
         for (int i = 0; i < board.length; i++) {
             BitSet bsRow = new BitSet(9);
