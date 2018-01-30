@@ -4,6 +4,7 @@
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>
     <string name="load">Load last game</string>
+    <string name="settings">Game settings</string>
     <string name="solve">Solve</string>
     <string name="gameOver">Game Over</string>
     <string name="youWin">You win!</string>
@@ -12,4 +13,8 @@
     <string name="solutionIsIncorrect">Solution incorrect!</string>
     <string name="resetCurrent">Reset current</string>
     <string name="continueCurrent">Continue</string>
+    <string name="redSquares">Show error on number entering</string>
+    <string name="greenCross">Show cross on cell click</string>
+    <string name="sameNumbers">Show same numbers</string>
+    <string name="okButton">OK</string>
 </resources>

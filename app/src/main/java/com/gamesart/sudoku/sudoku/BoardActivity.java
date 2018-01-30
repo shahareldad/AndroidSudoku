@@ -41,10 +41,9 @@ public class BoardActivity extends AppCompatActivity {
     private TextView[][] _textViews = null;
     private int _screenWidth = 0;
     private Integer _level;
-    private boolean _loadGame;
-    private SudokuSolver _solver = null;
     private int _counter = 0;
     private ArrayList<CellData> _cells = null;
+    private SettingsData _settings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,14 +55,14 @@ public class BoardActivity extends AppCompatActivity {
         AdRequest request = new AdRequest.Builder().build();
         _adView.loadAd(request);
 
-        _level = Integer.valueOf(getIntent().getIntExtra(FirstViewActivity.LevelParamName, 1));
-        _loadGame = Boolean.valueOf(getIntent().getBooleanExtra(FirstViewActivity.LoadGameParamName, false));
+        LoadSettingsData();
+
+        _level = getIntent().getIntExtra(FirstViewActivity.LevelParamName, 1);
+        boolean _loadGame = getIntent().getBooleanExtra(FirstViewActivity.LoadGameParamName, false);
 
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
         _screenWidth = size.x;
-
-        _solver = new SudokuSolver();
 
         LoadAllTextViewsToArray(_screenWidth);
 
@@ -77,6 +76,51 @@ public class BoardActivity extends AppCompatActivity {
         }
 
         InitKeyboard();
+    }
+
+    private void LoadSettingsData() {
+        BufferedReader br = null;
+        StringBuilder builder = null;
+        InputStream stream = null;
+
+        try{
+            stream = openFileInput(FirstViewActivity.SETTINGS_FILENAME);
+            br = new BufferedReader(new InputStreamReader(stream));
+            builder = new StringBuilder();
+
+            String line;
+            while ((line = br.readLine()) != null){
+                builder.append(line);
+            }
+            stream.close();
+        }
+        catch (IOException ex){
+        }
+        finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+		_settings = new SettingsData();
+		_settings.setSameNumbers(false);
+		_settings.setGreenCross(false);
+		_settings.setRedSquares(false);
+        Gson gson = new GsonBuilder().create();
+        if (builder != null) {
+            _settings = gson.fromJson(builder.toString(), new TypeToken<SettingsData>() {}.getType());
+        }
     }
 
     @Override
@@ -122,6 +166,7 @@ public class BoardActivity extends AppCompatActivity {
             stream.close();
         }
         catch (IOException ex){
+
         }
         finally {
             if (stream != null) {
@@ -467,8 +512,7 @@ public class BoardActivity extends AppCompatActivity {
             int digit = item.getCellDigit();
             int row = item.getRow();
             int col = item.getColumn();
-            Log.d(TAG, "StartNewGame => row: " + row + " col: " + col + " isConst: " + item.getIsCellConst() + " digit: " + digit);
-            UpdateTextViewCell(_textViews[row][col], digit, row, col);
+            UpdateTextViewCell(_textViews[row][col], item.getIsCellConst());
             if (item.getIsCellConst().equals("0")) {
                 _textViews[row][col].setTextColor(Color.BLACK);
                 if (digit != 0)
@@ -483,40 +527,14 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    private void UpdateTextViewCell(TextView cell, int digit, int row, int col) {
+    private void UpdateTextViewCell(TextView cell, String isConst) {
 
         String cellTag = String.valueOf(cell.getTag());
         if (cellTag.length() == 4){
             cellTag = cellTag.substring(0, 3);
         }
-        if (digit == 0){
-            cellTag += "0";
-        }
-        else{
-            cellTag += "1";
-        }
+        cellTag += isConst;
         cell.setTag(cellTag);
-
-        if ((row >= 0 && row <= 2) || (row >= 6 && row <= 8)){
-            if (col >= 3 && col <= 5){
-                cell.setBackground(getDrawable(R.drawable.sudoku_cell));
-                cellTag += "1";
-            }
-            else{
-                cell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
-                cellTag += "0";
-            }
-        }
-        else{
-            if (col < 3 || col > 5){
-                cell.setBackground(getDrawable(R.drawable.sudoku_cell));
-                cellTag += "1";
-            }
-            else{
-                cell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
-                cellTag += "0";
-            }
-        }
 
         cell.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -541,32 +559,53 @@ public class BoardActivity extends AppCompatActivity {
                 String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
 
                 if (selectedRow.equals(String.valueOf(row)) || selectedCol.equals(String.valueOf(col))){
-                    currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
+                    if (_settings.showGreenCross()) {
+                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
+                    }
+                    else{
+                        SetDefaultBackground(currentWorkCell);
+                    }
                     if (currentWorkCell == view){
                         currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected));
                         continue;
                     }
                     if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
-                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col_error));
+                        if (_settings.showRedSquares()) {
+                            if (_settings.showGreenCross()){
+                                currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col_error));
+                            }
+                            else{
+                                currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number_error));
+                            }
+                        }
+                        else{
+                            if (_settings.showGreenCross()) {
+                                currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_row_col));
+                            }
+                            else{
+                                SetDefaultBackground(currentWorkCell);
+                            }
+                        }
                     }
                 }
                 else{
                     if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
-                        currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number));
+                        if (_settings.showSameNumbers()) {
+                            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number));
+                        }
+                        else{
+                            SetDefaultBackground(currentWorkCell);
+                        }
                         if ((row >= sectionRowStart && row <= (sectionRowStart + 2)) && (col >= sectionColStart && col <= (sectionColStart + 2))){
                             if (currentWorkCellDigit.equals(selectedCellDigit) && !currentWorkCellDigit.equals("")){
-                                currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number_error));
+                                if (_settings.showRedSquares()) {
+                                    currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_selected_same_number_error));
+                                }
                             }
                         }
                     }
                     else{
-                        char backgroundState = String.valueOf(currentWorkCell.getTag()).charAt(2);
-                        if (backgroundState == '1'){
-                            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell));
-                        }
-                        else{
-                            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
-                        }
+                        SetDefaultBackground(currentWorkCell);
                     }
                 }
             }
@@ -574,6 +613,10 @@ public class BoardActivity extends AppCompatActivity {
 
         lastSelectedCell = view;
 
+        EnableDisableKeyboard(view);
+    }
+
+    private void EnableDisableKeyboard(TextView view) {
         GridLayout grid = findViewById(R.id.gameKeyboard);
         int length = grid.getChildCount();
         char isConst = String.valueOf(view.getTag()).charAt(3);
@@ -599,6 +642,16 @@ public class BoardActivity extends AppCompatActivity {
                     }
                     break;
             }
+        }
+    }
+
+    private void SetDefaultBackground(TextView currentWorkCell) {
+        char backgroundState = String.valueOf(currentWorkCell.getTag()).charAt(2);
+        if (backgroundState == '1'){
+            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell));
+        }
+        else{
+            currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
         }
     }
 }
