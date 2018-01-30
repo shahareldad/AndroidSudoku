@@ -341,8 +341,8 @@ public class BoardActivity extends AppCompatActivity {
     private boolean isUserBoardValid(int[][] board) {
         //Check rows and columns
         for (int i = 0; i < board.length; i++) {
-            BitSet bsRow = new BitSet(9);
-            BitSet bsColumn = new BitSet(9);
+            BitSet bsRow = new BitSet(_subgridColRowLength);
+            BitSet bsColumn = new BitSet(_subgridColRowLength);
             for (int j = 0; j < board[i].length; j++) {
                 if (board[i][j] == 0 || board[j][i] == 0) continue;
                 if (bsRow.get(board[i][j] - 1) || bsColumn.get(board[j][i] - 1))
@@ -354,9 +354,9 @@ public class BoardActivity extends AppCompatActivity {
             }
         }
         //Check within 3 x 3 grid
-        for (int rowOffset = 0; rowOffset < 9; rowOffset += 3) {
-            for (int columnOffset = 0; columnOffset < 9; columnOffset += 3) {
-                BitSet threeByThree = new BitSet(9);
+        for (int rowOffset = 0; rowOffset < _subgridColRowLength; rowOffset += 3) {
+            for (int columnOffset = 0; columnOffset < _subgridColRowLength; columnOffset += 3) {
+                BitSet threeByThree = new BitSet(_subgridColRowLength);
                 for (int i = rowOffset; i < rowOffset + 3; i++) {
                     for (int j = columnOffset; j < columnOffset + 3; j++) {
                         if (board[i][j] == 0) continue;
