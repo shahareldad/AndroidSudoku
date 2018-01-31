@@ -1,6 +1,7 @@
 package com.gamesart.sudoku.sudoku;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -205,15 +206,13 @@ public class BoardActivity extends AppCompatActivity {
                         continue;
                     }
                     String text = String.valueOf(temp.getText());
-                    Toast.makeText(this, solvedBoard[row][col], Toast.LENGTH_SHORT).show();
-                    if (text.equals(solvedBoard[row][col])){
+                    if (text.equals(String.valueOf(solvedBoard[row][col]))){
                         continue;
                     }
                     if ("".equals(text)){
                         continue;
                     }
                     isFoundError = true;
-                    _tipsEngine.decreaseTipsAmount();
                     String regularOrAlternate = String.valueOf(tag.charAt(2));
                     if ("1".equals(regularOrAlternate)){
                         temp.setBackground(getDrawable(R.drawable.sudoku_cell_error));
@@ -227,9 +226,20 @@ public class BoardActivity extends AppCompatActivity {
                     break;
                 }
             }
-
-            _tipsEngine.decreaseTipsAmount();
-
+            if (!isFoundError){
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.noErrors);
+                builder.setMessage(R.string.goodJob);
+                builder.setPositiveButton(R.string.okButton, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        // DO NOTHING
+                    }
+                });
+                builder.create().show();
+            }else{
+                _tipsEngine.decreaseTipsAmount();
+            }
         }
         finally {
             l.unlock();

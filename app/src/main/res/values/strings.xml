@@ -19,4 +19,6 @@
     <string name="okButton">OK</string>
     <string name="solveCell">Solve random cell</string>
     <string name="findError">Find error cell</string>
+    <string name="noErrors">No errors found</string>
+    <string name="goodJob">Good job</string>
 </resources>
