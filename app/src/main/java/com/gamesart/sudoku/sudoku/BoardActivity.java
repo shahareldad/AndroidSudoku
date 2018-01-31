@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -44,6 +45,8 @@ public class BoardActivity extends AppCompatActivity {
     private int _counter = 0;
     private ArrayList<CellData> _cells = null;
     private SettingsData _settings;
+    private TipsEngine _tipsEngine;
+    private int _calibirateCounter = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +57,8 @@ public class BoardActivity extends AppCompatActivity {
         AdView _adView = findViewById(R.id.adView);
         AdRequest request = new AdRequest.Builder().build();
         _adView.loadAd(request);
+
+        _tipsEngine = new TipsEngine();
 
         LoadSettingsData();
 
@@ -355,7 +360,6 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void CheckWinState(){
-
         if (_counter != 0)
             return;
 
@@ -517,9 +521,11 @@ public class BoardActivity extends AppCompatActivity {
                 _textViews[row][col].setTextColor(Color.BLACK);
                 if (digit != 0)
                     _textViews[row][col].setText(String.valueOf(digit));
-                else
+                else {
                     _textViews[row][col].setText("");
-                _counter++;
+                    _counter++;
+                }
+
                 continue;
             }
             _textViews[row][col].setText(String.valueOf(digit));
