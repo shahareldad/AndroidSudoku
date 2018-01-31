@@ -17,4 +17,6 @@
     <string name="greenCross">Show cross on cell click</string>
     <string name="sameNumbers">Show same numbers</string>
     <string name="okButton">OK</string>
+    <string name="solveCell">Solve random cell</string>
+    <string name="findError">Find error cell</string>
 </resources>

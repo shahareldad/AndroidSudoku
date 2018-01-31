@@ -6,9 +6,11 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -29,6 +31,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Random;
 
 public class BoardActivity extends AppCompatActivity {
 
@@ -46,7 +49,6 @@ public class BoardActivity extends AppCompatActivity {
     private ArrayList<CellData> _cells = null;
     private SettingsData _settings;
     private TipsEngine _tipsEngine;
-    private int _calibirateCounter = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,11 +56,21 @@ public class BoardActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_board);
 
-        AdView _adView = findViewById(R.id.adView);
-        AdRequest request = new AdRequest.Builder().build();
-        _adView.loadAd(request);
-
         _tipsEngine = new TipsEngine();
+        Button solveCellBtn = findViewById(R.id.solveCellBtn);
+        solveCellBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SolveRandomCell();
+            }
+        });
+        Button findErrorBtn = findViewById(R.id.findErrorBtn);
+        findErrorBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FindCellWithError();
+            }
+        });
 
         LoadSettingsData();
 
@@ -81,6 +93,92 @@ public class BoardActivity extends AppCompatActivity {
         }
 
         InitKeyboard();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        SaveCurrentBoardState();
+    }
+
+    private void SolveRandomCell(){
+        int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
+        if (currentTipsAmount == 0)
+            return;
+
+        _tipsEngine.decreaseTipsAmount();
+
+        ArrayList<TextView> _emptyTextViews = GetEmptyTextViews();
+        TextView requiredCell = GetRandomCell(_emptyTextViews);
+        int[][] solvedBoard = GetSolvedBoard();
+        int row = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(0)));
+        int col = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(1)));
+        int solvedDigit = solvedBoard[row][col];
+        requiredCell.setText(String.valueOf(solvedDigit));
+        requiredCell.setTextColor(Color.BLACK);
+        SetCellConst(requiredCell);
+        _counter--;
+
+        if (((row < 3 || row > 5) && (col < 3 || col > 5)) || ((row >= 3 && row <= 5) && (col >= 3 && col <= 5))){
+            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt_tip_solve));
+        }
+        else{
+            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_tip_solve));
+        }
+
+        if (_counter == 0){
+            ShowWinStateDialog();
+        }
+    }
+
+    private int[][] GetSolvedBoard() {
+        int[][] temp = deepCopy(_board);
+        SudokuSolver solver = new SudokuSolver();
+        solver.Solve(temp);
+        return solver.GetSolvedBoard();
+    }
+
+    private TextView GetRandomCell(ArrayList<TextView> textViews) {
+        int length = textViews.size();
+        int randomNumber = new Random().nextInt(length);
+        return textViews.get(randomNumber);
+    }
+
+    @NonNull
+    private ArrayList<TextView> GetEmptyTextViews() {
+        ArrayList<TextView> _emptyTextViews = new ArrayList<>();
+        for (int row = 0; row < _subgridColRowLength; row++) {
+            for (int col = 0; col < _subgridColRowLength; col++) {
+                TextView temp = _textViews[row][col];
+                SetDefaultBackground(temp);
+                String text = String.valueOf(temp.getText());
+                if (text.equals("")){
+                    _emptyTextViews.add(temp);
+                }
+            }
+        }
+        return _emptyTextViews;
+    }
+
+    private void SetCellConst(TextView requiredCell) {
+        String tag = String.valueOf(requiredCell.getTag());
+        String newTag = tag.charAt(0) + tag.charAt(1) + "1" + tag.charAt(3);
+        requiredCell.setTag(newTag);
+    }
+
+    private void FindCellWithError(){
+        int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
+        if (currentTipsAmount == 0)
+            return;
+
+        _tipsEngine.decreaseTipsAmount();
+
+//        for (int row = 0; row < _subgridColRowLength; row++) {
+//            for (int col = 0; col < _subgridColRowLength; col++) {
+//
+//            }
+//        }
     }
 
     private void LoadSettingsData() {
@@ -118,21 +216,14 @@ public class BoardActivity extends AppCompatActivity {
             }
         }
 
-		_settings = new SettingsData();
-		_settings.setSameNumbers(false);
-		_settings.setGreenCross(false);
-		_settings.setRedSquares(false);
+        _settings = new SettingsData();
+        _settings.setSameNumbers(false);
+        _settings.setGreenCross(false);
+        _settings.setRedSquares(false);
         Gson gson = new GsonBuilder().create();
         if (builder != null) {
             _settings = gson.fromJson(builder.toString(), new TypeToken<SettingsData>() {}.getType());
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        SaveCurrentBoardState();
     }
 
     private void LoadAllTextViewsToArray(int screenWidth) {
@@ -366,25 +457,35 @@ public class BoardActivity extends AppCompatActivity {
         int[][] temp = deepCopy(_board);
         boolean isWinStateTrue = isUserBoardValid(temp);
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         if (isWinStateTrue) {
-            builder.setTitle(R.string.youWin);
-            final String[] items = new String[]{
-                    getString(R.string.startNew),
-                    getString(R.string.selectLevel)
-            };
-            ShowAlertDialogOnGameOver(builder, items);
+            _tipsEngine.userWonGame();
+            ShowWinStateDialog();
         }
         else{
-            builder.setTitle(R.string.solutionIsIncorrect);
-            final String[] items = new String[]{
-                    getString(R.string.continueCurrent),
-                    getString(R.string.resetCurrent),
-                    getString(R.string.startNew),
-                    getString(R.string.selectLevel)
-            };
-            ShowAlertDialogOnGameOver(builder, items);
+            ShowLoseStateDialog();
         }
+    }
+
+    private void ShowLoseStateDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.solutionIsIncorrect);
+        final String[] items = new String[]{
+                getString(R.string.continueCurrent),
+                getString(R.string.resetCurrent),
+                getString(R.string.startNew),
+                getString(R.string.selectLevel)
+        };
+        ShowAlertDialogOnGameOver(builder, items);
+    }
+
+    private void ShowWinStateDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.youWin);
+        final String[] items = new String[]{
+                getString(R.string.startNew),
+                getString(R.string.selectLevel)
+        };
+        ShowAlertDialogOnGameOver(builder, items);
     }
 
     private boolean isUserBoardValid(int[][] board) {
@@ -509,13 +610,13 @@ public class BoardActivity extends AppCompatActivity {
 
         int cellsCount = _cells.size();
         for(int index = 0; index < cellsCount; index++){
-
             CellData item = _cells.get(index);
             if (isResetRequested && item.getIsCellConst().equals("0"))
                 item.setCellDigit(0);
             int digit = item.getCellDigit();
             int row = item.getRow();
             int col = item.getColumn();
+            SetDefaultBackground(_textViews[row][col]);
             UpdateTextViewCell(_textViews[row][col], item.getIsCellConst());
             if (item.getIsCellConst().equals("0")) {
                 _textViews[row][col].setTextColor(Color.BLACK);
