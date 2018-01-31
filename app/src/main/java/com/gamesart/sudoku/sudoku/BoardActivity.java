@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -36,7 +37,7 @@ public class BoardActivity extends AppCompatActivity {
     private String TAG = "BoardActivity";
     private String FILENAME = "games_art_sudoku_saved_board";
 
-    private int _subgridColRowLength = 9;
+    private int _sectionColRowLength = 9;
     private int _fullBoardLength = 81;
     private TextView lastSelectedCell = null;
     private int[][] _board = null;
@@ -159,8 +160,8 @@ public class BoardActivity extends AppCompatActivity {
     @NonNull
     private ArrayList<TextView> GetEmptyTextViews() {
         ArrayList<TextView> _emptyTextViews = new ArrayList<>();
-        for (int row = 0; row < _subgridColRowLength; row++) {
-            for (int col = 0; col < _subgridColRowLength; col++) {
+        for (int row = 0; row < _sectionColRowLength; row++) {
+            for (int col = 0; col < _sectionColRowLength; col++) {
                 TextView temp = _textViews[row][col];
                 SetDefaultBackground(temp);
                 String text = String.valueOf(temp.getText());
@@ -196,14 +197,15 @@ public class BoardActivity extends AppCompatActivity {
 
             int[][] solvedBoard = GetSolvedBoard();
             boolean isFoundError = false;
-            for (int row = 0; row < _subgridColRowLength; row++) {
-                for (int col = 0; col < _subgridColRowLength; col++) {
+            for (int row = 0; row < _sectionColRowLength; row++) {
+                for (int col = 0; col < _sectionColRowLength; col++) {
                     TextView temp = _textViews[row][col];
                     String tag = String.valueOf(temp.getTag());
                     if ("1".equals(String.valueOf(tag.charAt(3)))){
                         continue;
                     }
                     String text = String.valueOf(temp.getText());
+                    Toast.makeText(this, solvedBoard[row][col], Toast.LENGTH_SHORT).show();
                     if (text.equals(solvedBoard[row][col])){
                         continue;
                     }
@@ -281,11 +283,11 @@ public class BoardActivity extends AppCompatActivity {
 
     private void LoadAllTextViewsToArray(int screenWidth) {
         GridLayout mainGridLayout = findViewById(R.id.mainGridLayout);
-        _textViews = new TextView[_subgridColRowLength][_subgridColRowLength];
-        int cellSide = screenWidth / _subgridColRowLength;
-        for (int index = 0; index < _subgridColRowLength; index++){
+        _textViews = new TextView[_sectionColRowLength][_sectionColRowLength];
+        int cellSide = screenWidth / _sectionColRowLength;
+        for (int index = 0; index < _sectionColRowLength; index++){
             GridLayout layout = (GridLayout)((RelativeLayout)mainGridLayout.getChildAt(index)).getChildAt(0);
-            for (int textViewIndex = 0; textViewIndex < _subgridColRowLength; textViewIndex++){
+            for (int textViewIndex = 0; textViewIndex < _sectionColRowLength; textViewIndex++){
                 TextView child = (TextView)layout.getChildAt(textViewIndex);
                 String tag = String.valueOf(child.getTag());
                 String row = String.valueOf(tag.charAt(0));
@@ -342,7 +344,7 @@ public class BoardActivity extends AppCompatActivity {
         Gson gson = new GsonBuilder().create();
         _cells = gson.fromJson(result, new TypeToken<ArrayList<CellData>>(){}.getType());
 
-        _board = new int[_subgridColRowLength][_subgridColRowLength];
+        _board = new int[_sectionColRowLength][_sectionColRowLength];
         for (int index = 0; index < _fullBoardLength; index++){
             CellData temp = _cells.get(index);
             if (temp.getIsCellConst().equals("1"))
@@ -356,8 +358,8 @@ public class BoardActivity extends AppCompatActivity {
 
         ArrayList<CellData> cells = new ArrayList<>(_fullBoardLength);
 
-        for (int row = 0; row < _subgridColRowLength; row++) {
-            for (int col = 0; col < _subgridColRowLength; col++) {
+        for (int row = 0; row < _sectionColRowLength; row++) {
+            for (int col = 0; col < _sectionColRowLength; col++) {
                 CellData item = new CellData();
                 TextView cell = _textViews[row][col];
                 String cellStringValue = cell.getText().toString();
@@ -404,7 +406,7 @@ public class BoardActivity extends AppCompatActivity {
 
         GridLayout keyboardGrid = findViewById(R.id.gameKeyboard);
         int length = keyboardGrid.getChildCount();
-        int height = _screenWidth / _subgridColRowLength;
+        int height = _screenWidth / _sectionColRowLength;
         int numericWidth = height * 7 / 5;
         int commandWidth = height * 2;
         for (int index = 0; index < length; index++){
@@ -544,8 +546,8 @@ public class BoardActivity extends AppCompatActivity {
     private boolean IsUserBoardValid(int[][] board) {
         //Check rows and columns
         for (int i = 0; i < board.length; i++) {
-            BitSet bsRow = new BitSet(_subgridColRowLength);
-            BitSet bsColumn = new BitSet(_subgridColRowLength);
+            BitSet bsRow = new BitSet(_sectionColRowLength);
+            BitSet bsColumn = new BitSet(_sectionColRowLength);
             for (int j = 0; j < board[i].length; j++) {
                 if (board[i][j] == 0 || board[j][i] == 0) continue;
                 if (bsRow.get(board[i][j] - 1) || bsColumn.get(board[j][i] - 1))
@@ -557,9 +559,9 @@ public class BoardActivity extends AppCompatActivity {
             }
         }
         //Check within 3 x 3 grid
-        for (int rowOffset = 0; rowOffset < _subgridColRowLength; rowOffset += 3) {
-            for (int columnOffset = 0; columnOffset < _subgridColRowLength; columnOffset += 3) {
-                BitSet threeByThree = new BitSet(_subgridColRowLength);
+        for (int rowOffset = 0; rowOffset < _sectionColRowLength; rowOffset += 3) {
+            for (int columnOffset = 0; columnOffset < _sectionColRowLength; columnOffset += 3) {
+                BitSet threeByThree = new BitSet(_sectionColRowLength);
                 for (int i = rowOffset; i < rowOffset + 3; i++) {
                     for (int j = columnOffset; j < columnOffset + 3; j++) {
                         if (board[i][j] == 0) continue;
@@ -647,8 +649,8 @@ public class BoardActivity extends AppCompatActivity {
                 _cells = new ArrayList<>();
             else
                 _cells.clear();
-            for (int row = 0; row < _subgridColRowLength; row++){
-                for (int col = 0; col < _subgridColRowLength; col++){
+            for (int row = 0; row < _sectionColRowLength; row++){
+                for (int col = 0; col < _sectionColRowLength; col++){
                     CellData item = new CellData();
                     item.setRow(row);
                     item.setColumn(col);
@@ -714,8 +716,8 @@ public class BoardActivity extends AppCompatActivity {
         int sectionRowStart = selectedRowInt / 3 * 3;
         int sectionColStart = selectedColInt / 3 * 3;
 
-        for (int row = 0; row < _subgridColRowLength; row++) {
-            for (int col = 0; col < _subgridColRowLength; col++) {
+        for (int row = 0; row < _sectionColRowLength; row++) {
+            for (int col = 0; col < _sectionColRowLength; col++) {
                 TextView currentWorkCell = _textViews[row][col];
                 String currentWorkCellDigit = String.valueOf(currentWorkCell.getText());
 
