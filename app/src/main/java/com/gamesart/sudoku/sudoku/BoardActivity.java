@@ -10,14 +10,10 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -32,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class BoardActivity extends AppCompatActivity {
 
@@ -49,6 +47,8 @@ public class BoardActivity extends AppCompatActivity {
     private ArrayList<CellData> _cells = null;
     private SettingsData _settings;
     private TipsEngine _tipsEngine;
+    private TextView _solveCellBtn;
+    private TextView _findErrorBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,15 +57,15 @@ public class BoardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_board);
 
         _tipsEngine = new TipsEngine();
-        Button solveCellBtn = findViewById(R.id.solveCellBtn);
-        solveCellBtn.setOnClickListener(new View.OnClickListener() {
+        _solveCellBtn = findViewById(R.id.solveCellBtn);
+        _solveCellBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 SolveRandomCell();
             }
         });
-        Button findErrorBtn = findViewById(R.id.findErrorBtn);
-        findErrorBtn.setOnClickListener(new View.OnClickListener() {
+        _findErrorBtn = findViewById(R.id.findErrorBtn);
+        _findErrorBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 FindCellWithError();
@@ -103,37 +103,46 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void SolveRandomCell(){
-        int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
-        if (currentTipsAmount == 0)
-            return;
+        Lock l = new ReentrantLock();
+        l.lock();
+        try{
+            int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
+            if (currentTipsAmount == 0)
+                return;
 
-        _tipsEngine.decreaseTipsAmount();
+            ArrayList<TextView> _emptyTextViews = GetEmptyTextViews();
+            TextView requiredCell = GetRandomCell(_emptyTextViews);
+            if (requiredCell == null){
+                ShowWinStateDialog();
+                return;
+            }
 
-        ArrayList<TextView> _emptyTextViews = GetEmptyTextViews();
-        TextView requiredCell = GetRandomCell(_emptyTextViews);
-        int[][] solvedBoard = GetSolvedBoard();
-        int row = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(0)));
-        int col = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(1)));
-        int solvedDigit = solvedBoard[row][col];
-        requiredCell.setText(String.valueOf(solvedDigit));
-        requiredCell.setTextColor(Color.BLACK);
-        SetCellConst(requiredCell);
-        _counter--;
+            int[][] solvedBoard = GetSolvedBoard();
+            int row = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(0)));
+            int col = Integer.valueOf(String.valueOf(String.valueOf(requiredCell.getTag()).charAt(1)));
+            int solvedDigit = solvedBoard[row][col];
+            String tag = String.valueOf(requiredCell.getTag());
+            updateCell(requiredCell, solvedDigit, tag);
+            _counter--;
+            _tipsEngine.decreaseTipsAmount();
 
-        if (((row < 3 || row > 5) && (col < 3 || col > 5)) || ((row >= 3 && row <= 5) && (col >= 3 && col <= 5))){
-            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt_tip_solve));
+            if (_counter == 0){
+                SetTipButtonsActive(false);
+                ShowWinStateDialog();
+            }
         }
-        else{
-            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_tip_solve));
-        }
-
-        if (_counter == 0){
-            ShowWinStateDialog();
+        finally {
+            l.unlock();
         }
     }
 
+    private void SetTipButtonsActive(boolean isActive) {
+        _solveCellBtn.setEnabled(isActive);
+        _findErrorBtn.setEnabled(isActive);
+    }
+
     private int[][] GetSolvedBoard() {
-        int[][] temp = deepCopy(_board);
+        int[][] temp = DeepCopy(_board);
         SudokuSolver solver = new SudokuSolver();
         solver.Solve(temp);
         return solver.GetSolvedBoard();
@@ -141,6 +150,8 @@ public class BoardActivity extends AppCompatActivity {
 
     private TextView GetRandomCell(ArrayList<TextView> textViews) {
         int length = textViews.size();
+        if (length <= 0)
+            return null;
         int randomNumber = new Random().nextInt(length);
         return textViews.get(randomNumber);
     }
@@ -153,7 +164,7 @@ public class BoardActivity extends AppCompatActivity {
                 TextView temp = _textViews[row][col];
                 SetDefaultBackground(temp);
                 String text = String.valueOf(temp.getText());
-                if (text.equals("")){
+                if ("".equals(text)){
                     _emptyTextViews.add(temp);
                 }
             }
@@ -161,24 +172,34 @@ public class BoardActivity extends AppCompatActivity {
         return _emptyTextViews;
     }
 
-    private void SetCellConst(TextView requiredCell) {
-        String tag = String.valueOf(requiredCell.getTag());
-        String newTag = tag.charAt(0) + tag.charAt(1) + "1" + tag.charAt(3);
+    private void updateCell(TextView requiredCell, int solvedDigit, String tag) {
+        requiredCell.setText(String.valueOf(solvedDigit));
+        requiredCell.setTextColor(Color.GRAY);
+        String newTag = tag.substring(0,3) + "1";
         requiredCell.setTag(newTag);
+        String regularOrAlternate = String.valueOf(tag.charAt(2));
+        if ("1".equals(regularOrAlternate)){
+            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_tip_solve));
+        }
+        else{
+            requiredCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt_tip_solve));
+        }
     }
 
     private void FindCellWithError(){
-        int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
-        if (currentTipsAmount == 0)
-            return;
+        Lock l = new ReentrantLock();
+        l.lock();
+        try{
+            int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
+            if (currentTipsAmount == 0)
+                return;
 
-        _tipsEngine.decreaseTipsAmount();
+            _tipsEngine.decreaseTipsAmount();
 
-//        for (int row = 0; row < _subgridColRowLength; row++) {
-//            for (int col = 0; col < _subgridColRowLength; col++) {
-//
-//            }
-//        }
+        }
+        finally {
+            l.unlock();
+        }
     }
 
     private void LoadSettingsData() {
@@ -454,8 +475,8 @@ public class BoardActivity extends AppCompatActivity {
         if (_counter != 0)
             return;
 
-        int[][] temp = deepCopy(_board);
-        boolean isWinStateTrue = isUserBoardValid(temp);
+        int[][] temp = DeepCopy(_board);
+        boolean isWinStateTrue = IsUserBoardValid(temp);
 
         if (isWinStateTrue) {
             _tipsEngine.userWonGame();
@@ -488,7 +509,7 @@ public class BoardActivity extends AppCompatActivity {
         ShowAlertDialogOnGameOver(builder, items);
     }
 
-    private boolean isUserBoardValid(int[][] board) {
+    private boolean IsUserBoardValid(int[][] board) {
         //Check rows and columns
         for (int i = 0; i < board.length; i++) {
             BitSet bsRow = new BitSet(_subgridColRowLength);
@@ -550,7 +571,7 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    private int[][] deepCopy(int[][] original) {
+    private int[][] DeepCopy(int[][] original) {
 
         if (original == null) {
             return null;
@@ -585,6 +606,7 @@ public class BoardActivity extends AppCompatActivity {
     private void StartNewGame(boolean newBoard, boolean isResetRequested) {
 
         _counter = 0;
+        SetTipButtonsActive(true);
         if (newBoard || (_cells == null)){
             Log.d(TAG, "StartNewGame => Starting a new game");
             SudokuGenerator generator = new SudokuGenerator();
