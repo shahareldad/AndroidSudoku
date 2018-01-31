@@ -194,6 +194,38 @@ public class BoardActivity extends AppCompatActivity {
             if (currentTipsAmount == 0)
                 return;
 
+            int[][] solvedBoard = GetSolvedBoard();
+            boolean isFoundError = false;
+            for (int row = 0; row < _subgridColRowLength; row++) {
+                for (int col = 0; col < _subgridColRowLength; col++) {
+                    TextView temp = _textViews[row][col];
+                    String tag = String.valueOf(temp.getTag());
+                    if ("1".equals(String.valueOf(tag.charAt(3)))){
+                        continue;
+                    }
+                    String text = String.valueOf(temp.getText());
+                    if (text.equals(solvedBoard[row][col])){
+                        continue;
+                    }
+                    if ("".equals(text)){
+                        continue;
+                    }
+                    isFoundError = true;
+                    _tipsEngine.decreaseTipsAmount();
+                    String regularOrAlternate = String.valueOf(tag.charAt(2));
+                    if ("1".equals(regularOrAlternate)){
+                        temp.setBackground(getDrawable(R.drawable.sudoku_cell_error));
+                    }
+                    else{
+                        temp.setBackground(getDrawable(R.drawable.sudoku_cell_alt_error));
+                    }
+                    break;
+                }
+                if (isFoundError){
+                    break;
+                }
+            }
+
             _tipsEngine.decreaseTipsAmount();
 
         }
