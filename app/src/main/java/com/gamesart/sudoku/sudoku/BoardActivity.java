@@ -1,7 +1,6 @@
 package com.gamesart.sudoku.sudoku;
 
 import android.app.AlertDialog;
-import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
@@ -14,7 +13,6 @@ import android.view.View;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -129,7 +127,6 @@ public class BoardActivity extends AppCompatActivity {
             _tipsEngine.decreaseTipsAmount();
 
             if (_counter == 0){
-                SetTipButtonsActive(false);
                 ShowWinStateDialog();
             }
         }
@@ -138,9 +135,9 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
-    private void SetTipButtonsActive(boolean isActive) {
-        _solveCellBtn.setEnabled(isActive);
-        _findErrorBtn.setEnabled(isActive);
+    private void EnableTipButtons(boolean enable){
+        _solveCellBtn.setEnabled(enable);
+        _findErrorBtn.setEnabled(enable);
     }
 
     private int[][] GetSolvedBoard() {
@@ -544,6 +541,8 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     private void ShowWinStateDialog() {
+        EnableTipButtons(false);
+        setKeyboardEnabledDisabled(false);
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(R.string.youWin);
         final String[] items = new String[]{
@@ -650,7 +649,7 @@ public class BoardActivity extends AppCompatActivity {
     private void StartNewGame(boolean newBoard, boolean isResetRequested) {
 
         _counter = 0;
-        SetTipButtonsActive(true);
+        EnableTipButtons(true);
         if (newBoard || (_cells == null)){
             Log.d(TAG, "StartNewGame => Starting a new game");
             SudokuGenerator generator = new SudokuGenerator();
@@ -786,13 +785,18 @@ public class BoardActivity extends AppCompatActivity {
 
         lastSelectedCell = view;
 
-        EnableDisableKeyboard(view);
+        char isConst = String.valueOf(view.getTag()).charAt(3);
+        if (isConst == '1'){
+            setKeyboardEnabledDisabled(false);
+        }else{
+            setKeyboardEnabledDisabled(true);
+        }
+
     }
 
-    private void EnableDisableKeyboard(TextView view) {
+    private void setKeyboardEnabledDisabled(boolean setKeyboardEnabled) {
         GridLayout grid = findViewById(R.id.gameKeyboard);
         int length = grid.getChildCount();
-        char isConst = String.valueOf(view.getTag()).charAt(3);
         for (int index = 0; index <length; index++){
             TextView key = (TextView)grid.getChildAt(index);
             String text = String.valueOf(key.getText());
@@ -807,12 +811,7 @@ public class BoardActivity extends AppCompatActivity {
                 case "8":
                 case "9":
                 case "Clear":
-                    if (isConst == '1'){
-                        key.setEnabled(false);
-                    }
-                    else{
-                        key.setEnabled(true);
-                    }
+                    key.setEnabled(setKeyboardEnabled);
                     break;
             }
         }
