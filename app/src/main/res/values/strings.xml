@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Sudoku by Art Games</string>
+    <string name="clearBtnTxt">Clear</string>
+    <string name="resetBtnTxt">Reset</string>
+    <string name="newGameBtnTxt">New Game</string>
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>
     <string name="hard">Hard</string>
@@ -29,4 +32,8 @@
     <string name="unlimited">Unlimited</string>
     <string name="currentCoins">Coins count</string>
     <string name="buyCoinsBtn">Buy more coins</string>
+    <string name="newGameRestart">New game / Restart</string>
+    <string name="areYouSure">Are you sure?</string>
+    <string name="yepp">Yepp</string>
+    <string name="nope">Nope</string>
 </resources>

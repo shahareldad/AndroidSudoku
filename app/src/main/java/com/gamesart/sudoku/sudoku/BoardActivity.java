@@ -474,7 +474,6 @@ public class BoardActivity extends AppCompatActivity {
                 item.setRow(row);
                 item.setColumn(col);
                 item.setIsCellConst(isConst);
-                Log.d(TAG, "SaveCurrentBoardState => row: " + row + " col: " + col + " isConst: " + isConst + " digit: " + cellStringValue);
                 cells.add(item);
             }
         }
@@ -721,15 +720,15 @@ public class BoardActivity extends AppCompatActivity {
 
     private void NewGameRestartClicked(final boolean newBoard, final boolean isResetRequested){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("New game / Restart");
-        builder.setMessage("Are you sure?");
-        builder.setPositiveButton("Yepp", new DialogInterface.OnClickListener() {
+        builder.setTitle(getString(R.string.newGameRestart));
+        builder.setMessage(getString(R.string.areYouSure));
+        builder.setPositiveButton(getString(R.string.yepp), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 StartNewGame(newBoard, isResetRequested);
             }
         });
-        builder.setNegativeButton("Nope", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.nope), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 // Do nothing
@@ -743,7 +742,6 @@ public class BoardActivity extends AppCompatActivity {
         _counter = 0;
         EnableTipButtons(true);
         if (newBoard || (_cells == null)){
-            Log.d(TAG, "StartNewGame => Starting a new game");
             SudokuGenerator generator = new SudokuGenerator();
             _board = generator.GetBoard(_level);
             if (_cells == null)

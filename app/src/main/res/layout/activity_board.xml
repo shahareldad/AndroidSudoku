@@ -1310,7 +1310,7 @@
             android:layout_row="1"
             android:background="@drawable/keyboard_key"
             android:gravity="center"
-            android:text="Clear"
+            android:text="@string/clearBtnTxt"
             android:enabled="false"
             android:textSize="16dp" />
 
@@ -1321,7 +1321,7 @@
             android:layout_row="0"
             android:background="@drawable/keyboard_key"
             android:gravity="center"
-            android:text="New Game"
+            android:text="@string/newGameBtnTxt"
             android:textSize="16dp" />
 
         <TextView
@@ -1331,7 +1331,7 @@
             android:layout_row="1"
             android:background="@drawable/keyboard_key"
             android:gravity="center"
-            android:text="Reset"
+            android:text="@string/resetBtnTxt"
             android:textSize="16dp" />
     </GridLayout>
 
