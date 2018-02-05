@@ -79,6 +79,8 @@ public class BoardActivity extends AppCompatActivity {
     private TextView _findErrorBtn;
     private final AppCompatActivity _activity = this;
     private Handler _alertDialogBuilderHandler;
+    private TextView _currentCoinsTitle;
+    private TextView _buyCoinsBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,12 +103,12 @@ public class BoardActivity extends AppCompatActivity {
         _solveCellBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                _solveCellBtn.setEnabled(false);
                 if (_tipsEngine.hasCoins()){
                     SolveRandomCell();
                 }
                 else{
                     if (_setupDone){
-
                         new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
                     }
                 }
@@ -117,6 +119,15 @@ public class BoardActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 FindCellWithError();
+            }
+        });
+        _buyCoinsBtn = findViewById(R.id.buyCoinsBtn);
+        _buyCoinsBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (_setupDone){
+                    new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
+                }
             }
         });
 
@@ -147,15 +158,21 @@ public class BoardActivity extends AppCompatActivity {
             StartNewGame(false, false);
         }
 
+        _currentCoinsTitle = findViewById(R.id.currentCoinsTitle);
+        _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
+
         InitKeyboard();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        _solveCellBtn.setEnabled(true);
         if (requestCode == REQUEST_CODE){
             int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
             if (responseCode == BILLING_RESPONSE_RESULT_OK){
                 _tipsEngine.userPurchasedCoins();
+                _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
+                _buyCoinsBtn.setVisibility(View.INVISIBLE);
             }
         }
     }
@@ -200,9 +217,17 @@ public class BoardActivity extends AppCompatActivity {
             updateCell(requiredCell, solvedDigit, tag);
             _counter--;
             _tipsEngine.decreaseTipsAmount();
+            _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
 
             if (_counter == 0){
+                _solveCellBtn.setEnabled(false);
                 ShowWinStateDialog();
+            }
+            else{
+                _solveCellBtn.setEnabled(true);
+            }
+            if (_tipsEngine.getCurrentNumberOfTips() == 0){
+                _buyCoinsBtn.setVisibility(View.VISIBLE);
             }
         }
         finally {
@@ -586,7 +611,8 @@ public class BoardActivity extends AppCompatActivity {
         boolean isWinStateTrue = IsUserBoardValid(temp);
 
         if (isWinStateTrue) {
-            _tipsEngine.userWonGame();
+            //_tipsEngine.userWonGame();
+            //_currentCoinsTitle.setText(_tipsEngine.getCurrentNumberOfTips());
             ShowWinStateDialog();
         }
         else{

@@ -26,4 +26,7 @@
     <string name="buyCoins">Would you like to buy more coins at the price of </string>
     <string name="thankYou">Thank you</string>
     <string name="thankYouForPurchase">Thank you for purchasing coins</string>
+    <string name="unlimited">Unlimited</string>
+    <string name="currentCoins">Coins count</string>
+    <string name="buyCoinsBtn">Buy more coins</string>
 </resources>

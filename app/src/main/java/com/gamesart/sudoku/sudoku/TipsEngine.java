@@ -58,15 +58,21 @@ class TipsEngine {
         }
 
         this._currentNumberOfTips--;
+        saveCoinsState();
     }
 
     void userWonGame(){
-        _currentNumberOfTips += 5;
+        _currentNumberOfTips++;
+        saveCoinsState();
     }
 
     void userPurchasedCoins(){
         _currentNumberOfTips += 100;
 
+        saveCoinsState();
+    }
+
+    private void saveCoinsState() {
         FileOutputStream fos = null;
         try{
             fos = _activity.openFileOutput(FILENAME, Context.MODE_PRIVATE);
