@@ -215,6 +215,7 @@ public class BoardActivity extends AppCompatActivity {
             int solvedDigit = solvedBoard[row][col];
             String tag = String.valueOf(requiredCell.getTag());
             updateCell(requiredCell, solvedDigit, tag);
+            UpdateCellDataWithConst(solvedDigit, row, col);
             _counter--;
             _tipsEngine.decreaseTipsAmount();
             _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
@@ -232,6 +233,16 @@ public class BoardActivity extends AppCompatActivity {
         }
         finally {
             l.unlock();
+        }
+    }
+
+    private void UpdateCellDataWithConst(int solvedDigit, int row, int col) {
+        for (int index = 0; index < _fullBoardLength; index++){
+            CellData cd = _cells.get(index);
+            if (cd.getRow() == row && cd.getColumn() == col){
+                cd.setIsCellConst("1");
+                cd.setCellDigit(solvedDigit);
+            }
         }
     }
 
