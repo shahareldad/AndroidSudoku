@@ -1,11 +1,18 @@
 package com.gamesart.sudoku.sudoku;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -14,12 +21,12 @@ import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.android.vending.billing.IInAppBillingService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,15 +34,36 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BoardActivity extends AppCompatActivity {
 
-    private String TAG = "BoardActivity";
-    private String FILENAME = "games_art_sudoku_saved_board";
+    private static final String TAG = "BoardActivity";
+    private static final String FILENAME = "games_art_sudoku_saved_board";
+    public static final int REQUEST_CODE = 1001;
+    public static final String PRODUCT_ID = "solve_random_cell_coins";
+    public static final String ITEM_TYPE_INAPP = "inapp";
+    public static final int BILLING_RESPONSE_RESULT_OK = 0;
 
+    private IInAppBillingService _service;
+
+    ServiceConnection _serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            _service = IInAppBillingService.Stub.asInterface(service);
+            _setupDone = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            _service = null;
+        }
+    };
+
+    private boolean _setupDone = false;
     private int _sectionColRowLength = 9;
     private int _fullBoardLength = 81;
     private TextView lastSelectedCell = null;
@@ -49,6 +77,8 @@ public class BoardActivity extends AppCompatActivity {
     private TipsEngine _tipsEngine;
     private TextView _solveCellBtn;
     private TextView _findErrorBtn;
+    private final AppCompatActivity _activity = this;
+    private Handler _alertDialogBuilderHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,12 +86,30 @@ public class BoardActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_board);
 
-        _tipsEngine = new TipsEngine();
+        _alertDialogBuilderHandler = new Handler(getMainLooper()){
+            @Override
+            public void handleMessage(Message msg) {
+                if (msg.obj != null){
+                    AlertDialog.Builder builder = (AlertDialog.Builder)msg.obj;
+                    builder.create().show();
+                }
+            }
+        };
+
+        _tipsEngine = new TipsEngine(this);
         _solveCellBtn = findViewById(R.id.solveCellBtn);
         _solveCellBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SolveRandomCell();
+                if (_tipsEngine.hasCoins()){
+                    SolveRandomCell();
+                }
+                else{
+                    if (_setupDone){
+
+                        new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
+                    }
+                }
             }
         });
         _findErrorBtn = findViewById(R.id.findErrorBtn);
@@ -71,6 +119,13 @@ public class BoardActivity extends AppCompatActivity {
                 FindCellWithError();
             }
         });
+
+        Intent serviceIntent = new Intent("com.android.vending.billing.InAppBillingService.BIND");
+        serviceIntent.setPackage("com.android.vending");
+        List<ResolveInfo> intentServices = getPackageManager().queryIntentServices(serviceIntent, 0);
+        if (intentServices != null && !intentServices.isEmpty()) {
+            bindService(serviceIntent, _serviceConnection, Context.BIND_AUTO_CREATE);
+        }
 
         LoadSettingsData();
 
@@ -96,10 +151,30 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE){
+            int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
+            if (responseCode == BILLING_RESPONSE_RESULT_OK){
+                _tipsEngine.userPurchasedCoins();
+            }
+        }
+    }
+
+    @Override
     protected void onPause() {
         super.onPause();
 
         SaveCurrentBoardState();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (_serviceConnection != null){
+            unbindService(_serviceConnection);
+        }
+        _serviceConnection = null;
+        _service = null;
     }
 
     private void SolveRandomCell(){
@@ -189,10 +264,6 @@ public class BoardActivity extends AppCompatActivity {
         Lock l = new ReentrantLock();
         l.lock();
         try{
-            int currentTipsAmount = _tipsEngine.getCurrentNumberOfTips();
-            if (currentTipsAmount == 0)
-                return;
-
             int[][] solvedBoard = GetSolvedBoard();
             boolean isFoundError = false;
             for (int row = 0; row < _sectionColRowLength; row++) {
@@ -234,8 +305,6 @@ public class BoardActivity extends AppCompatActivity {
                     }
                 });
                 builder.create().show();
-            }else{
-                _tipsEngine.decreaseTipsAmount();
             }
         }
         finally {
@@ -393,12 +462,9 @@ public class BoardActivity extends AppCompatActivity {
             fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
             fos.write(result.getBytes());
             fos.close();
-        }
-        catch (FileNotFoundException ex){
-        }
-        catch (IOException ex){
-        }
-        finally {
+        }catch (IOException ex){
+
+        }finally {
             if (fos != null){
                 try {
                     fos.close();
@@ -826,4 +892,5 @@ public class BoardActivity extends AppCompatActivity {
             currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell_alt));
         }
     }
+
 }

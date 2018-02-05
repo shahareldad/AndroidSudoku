@@ -1,17 +1,58 @@
 package com.gamesart.sudoku.sudoku;
 
-/**
- * Created by shaharel on 31/01/2018.
- */
+import android.content.Context;
+import android.support.v7.app.AppCompatActivity;
 
-public class TipsEngine {
-    private int _currentNumberOfTips = 1000000;
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
-    public int getCurrentNumberOfTips() {
+class TipsEngine {
+
+    private static final String FILENAME = "games_art_sudoku_saved_coins";
+    private final AppCompatActivity _activity;
+    private int _currentNumberOfTips = 5;
+
+    TipsEngine(AppCompatActivity activity){
+        _activity = activity;
+
+        BufferedReader br = null;
+        InputStream stream = null;
+
+        try{
+            stream = _activity.openFileInput(FILENAME);
+            br = new BufferedReader(new InputStreamReader(stream));
+            String coins = br.readLine();
+            _currentNumberOfTips = Integer.valueOf(coins);
+        }
+        catch (IOException ex){
+        }
+        finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    int getCurrentNumberOfTips() {
         return _currentNumberOfTips;
     }
 
-    public void decreaseTipsAmount() {
+    void decreaseTipsAmount() {
         if (_currentNumberOfTips <= 0){
             return;
         }
@@ -19,7 +60,32 @@ public class TipsEngine {
         this._currentNumberOfTips--;
     }
 
-    public void userWonGame(){
+    void userWonGame(){
         _currentNumberOfTips += 5;
+    }
+
+    void userPurchasedCoins(){
+        _currentNumberOfTips += 100;
+
+        FileOutputStream fos = null;
+        try{
+            fos = _activity.openFileOutput(FILENAME, Context.MODE_PRIVATE);
+            fos.write(String.valueOf(_currentNumberOfTips).getBytes());
+            fos.close();
+        }catch (IOException ex){
+
+        }finally {
+            if (fos != null){
+                try {
+                    fos.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+
+    boolean hasCoins(){
+        return _currentNumberOfTips > 0;
     }
 }

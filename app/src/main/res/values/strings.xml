@@ -17,8 +17,13 @@
     <string name="greenCross">Show cross on cell click</string>
     <string name="sameNumbers">Show same numbers</string>
     <string name="okButton">OK</string>
+    <string name="cancelButton">Cancel</string>
     <string name="solveCell">Solve random cell</string>
     <string name="findError">Find error cell</string>
     <string name="noErrors">No errors found</string>
     <string name="goodJob">Good job</string>
+    <string name="noCoins">No more coins left</string>
+    <string name="buyCoins">Would you like to buy more coins at the price of </string>
+    <string name="thankYou">Thank you</string>
+    <string name="thankYouForPurchase">Thank you for purchasing coins</string>
 </resources>
