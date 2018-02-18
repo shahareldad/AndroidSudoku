@@ -56,7 +56,7 @@
         ads:adSize="MEDIUM_RECTANGLE"
         android:layout_marginTop="5dp"
         ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
-    <!--ads:adUnitId="ca-app-pub-8402023979328526/1983770365">-->
+        <!--ads:adUnitId="ca-app-pub-8402023979328526/1983770365">-->
     </com.google.android.gms.ads.AdView>
 
     <com.google.android.gms.ads.AdView
@@ -69,7 +69,7 @@
         ads:adSize="BANNER"
         android:layout_marginTop="5dp"
         ads:adUnitId="ca-app-pub-3940256099942544/6300978111">
-    <!--ads:adUnitId="ca-app-pub-8402023979328526/4606064270">-->
+        <!--ads:adUnitId="ca-app-pub-8402023979328526/4606064270">-->
     </com.google.android.gms.ads.AdView>
 
 </LinearLayout>
