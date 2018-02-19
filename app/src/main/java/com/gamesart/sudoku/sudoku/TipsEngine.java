@@ -61,8 +61,9 @@ class TipsEngine {
         saveCoinsState();
     }
 
-    void userWonGame(){
-        _currentNumberOfTips++;
+    void userSawVideo(){
+        _currentNumberOfTips += 5;
+
         saveCoinsState();
     }
 

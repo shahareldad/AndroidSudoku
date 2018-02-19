@@ -31,9 +31,11 @@
     <string name="thankYouForPurchase">Thank you for purchasing coins</string>
     <string name="unlimited">Unlimited</string>
     <string name="currentCoins">Coins count</string>
-    <string name="buyCoinsBtn">Buy more coins</string>
+    <string name="buyCoinsBtn">Get more coins</string>
     <string name="newGameRestart">New game / Restart</string>
     <string name="areYouSure">Are you sure?</string>
     <string name="yepp">Yepp</string>
     <string name="nope">Nope</string>
+    <string name="buy100coins">Buy 100 coins for 0.99$</string>
+    <string name="watchVideo">Watch video for 5 coins</string>
 </resources>

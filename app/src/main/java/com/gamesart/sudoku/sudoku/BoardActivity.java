@@ -22,6 +22,11 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.reward.RewardItem;
+import com.google.android.gms.ads.reward.RewardedVideoAd;
+import com.google.android.gms.ads.reward.RewardedVideoAdListener;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -39,7 +44,7 @@ import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BoardActivity extends AppCompatActivity {
+public class BoardActivity extends AppCompatActivity implements RewardedVideoAdListener {
 
     private static final String TAG = "BoardActivity";
     private static final String FILENAME = "games_art_sudoku_saved_board";
@@ -81,6 +86,7 @@ public class BoardActivity extends AppCompatActivity {
     private Handler _alertDialogBuilderHandler;
     private TextView _currentCoinsTitle;
     private TextView _buyCoinsBtn;
+    private RewardedVideoAd mRewardedVideoAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +94,12 @@ public class BoardActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_board);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        MobileAds.initialize(this, "ca-app-pub-8402023979328526~3171238260");
+
+        mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(this);
+        mRewardedVideoAd.setRewardedVideoAdListener(this);
+        loadRewardedVideoAd();
 
         _alertDialogBuilderHandler = new Handler(getMainLooper()){
             @Override
@@ -109,9 +121,7 @@ public class BoardActivity extends AppCompatActivity {
                     SolveRandomCell();
                 }
                 else{
-                    if (_setupDone){
-                        new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
-                    }
+                    ShowGetCoinsDialog();
                 }
             }
         });
@@ -126,9 +136,7 @@ public class BoardActivity extends AppCompatActivity {
         _buyCoinsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (_setupDone){
-                    new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
-                }
+                ShowGetCoinsDialog();
             }
         });
 
@@ -179,7 +187,14 @@ public class BoardActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        mRewardedVideoAd.resume(this);
+        super.onResume();
+    }
+
+    @Override
     protected void onPause() {
+        mRewardedVideoAd.pause(this);
         super.onPause();
 
         SaveCurrentBoardState();
@@ -187,12 +202,55 @@ public class BoardActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        mRewardedVideoAd.destroy(this);
         super.onDestroy();
         if (_serviceConnection != null){
             unbindService(_serviceConnection);
         }
         _serviceConnection = null;
         _service = null;
+    }
+
+    private void ShowGetCoinsDialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.solutionIsIncorrect);
+        final String[] items = new String[]{
+                getString(R.string.buy100coins),
+                getString(R.string.watchVideo)
+        };
+        builder.setItems(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                String selection = Arrays.asList(items).get(i);
+
+                if (selection.equals(getString(R.string.buy100coins))){
+                    if (_setupDone){
+                        new QueryProducts(_service, _activity, _alertDialogBuilderHandler, _tipsEngine).execute();
+                    }
+                }
+                if (selection.equals(getString(R.string.watchVideo))){
+                    if (mRewardedVideoAd.isLoaded()) {
+                        mRewardedVideoAd.show();
+                    }else{
+                        loadRewardedVideoAd();
+                        if (mRewardedVideoAd.isLoaded()) {
+                            mRewardedVideoAd.show();
+                        }
+                    }
+                }
+            }
+        });
+
+        builder.create().show();
+    }
+
+    private void loadRewardedVideoAd() {
+        //TODO: change this ad serial to mine
+        //
+//        mRewardedVideoAd.loadAd("ca-app-pub-8402023979328526/7489955284",
+//                new AdRequest.Builder().build());
+        mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
+                new AdRequest.Builder().build());
     }
 
     private void SolveRandomCell(){
@@ -929,4 +987,41 @@ public class BoardActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRewardedVideoAdLoaded() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdOpened() {
+
+    }
+
+    @Override
+    public void onRewardedVideoStarted() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdClosed() {
+        loadRewardedVideoAd();
+    }
+
+    @Override
+    public void onRewarded(RewardItem rewardItem) {
+        _tipsEngine.userSawVideo();
+        _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
+        _buyCoinsBtn.setVisibility(View.INVISIBLE);
+        _solveCellBtn.setEnabled(true);
+    }
+
+    @Override
+    public void onRewardedVideoAdLeftApplication() {
+
+    }
+
+    @Override
+    public void onRewardedVideoAdFailedToLoad(int i) {
+        loadRewardedVideoAd();
+    }
 }
