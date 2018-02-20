@@ -2,6 +2,7 @@
     <string name="app_name">Sudoku by Art Games</string>
     <string name="clearBtnTxt">Clear</string>
     <string name="resetBtnTxt">Reset</string>
+    <string name="editBtnTxt">Edit</string>
     <string name="newGameBtnTxt">New Game</string>
     <string name="easy">Easy</string>
     <string name="medium">Medium</string>

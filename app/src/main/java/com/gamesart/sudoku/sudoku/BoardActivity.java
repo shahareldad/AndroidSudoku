@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.GridLayout;
@@ -22,6 +23,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.android.vending.billing.IInAppBillingService;
+import com.gamesart.sudoku.sudoku.util.LastCellSelected;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.reward.RewardItem;
@@ -71,9 +73,10 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
     private boolean _setupDone = false;
     private int _sectionColRowLength = 9;
     private int _fullBoardLength = 81;
-    private TextView lastSelectedCell = null;
+    private LastCellSelected lastSelectedCell = null;
     private int[][] _board = null;
     private TextView[][] _textViews = null;
+    private GridLayout[][] _gridLayoutNotes = null;
     private int _screenWidth = 0;
     private Integer _level;
     private int _counter = 0;
@@ -156,7 +159,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         getWindowManager().getDefaultDisplay().getSize(size);
         _screenWidth = size.x;
 
-        LoadAllTextViewsToArray(_screenWidth);
+        LoadControlsToArray(_screenWidth);
 
         if (!_loadGame) {
             _cells = new ArrayList<>(_fullBoardLength);
@@ -452,20 +455,31 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         }
     }
 
-    private void LoadAllTextViewsToArray(int screenWidth) {
+    private void LoadControlsToArray(int screenWidth) {
         GridLayout mainGridLayout = findViewById(R.id.mainGridLayout);
         _textViews = new TextView[_sectionColRowLength][_sectionColRowLength];
+        _gridLayoutNotes = new GridLayout[_sectionColRowLength][_sectionColRowLength];
         int cellSide = screenWidth / _sectionColRowLength;
         for (int index = 0; index < _sectionColRowLength; index++){
             GridLayout layout = (GridLayout)((RelativeLayout)mainGridLayout.getChildAt(index)).getChildAt(0);
-            for (int textViewIndex = 0; textViewIndex < _sectionColRowLength; textViewIndex++){
-                TextView child = (TextView)layout.getChildAt(textViewIndex);
-                String tag = String.valueOf(child.getTag());
-                String row = String.valueOf(tag.charAt(0));
-                String col = String.valueOf(tag.charAt(1));
-                _textViews[Integer.valueOf(row)][Integer.valueOf(col)] = child;
-                child.setWidth(cellSide);
-                child.setHeight(cellSide);
+            for (int childIndex = 0; childIndex < _sectionColRowLength * 2; childIndex += 2){
+                TextView childTextView = (TextView)layout.getChildAt(childIndex);
+                String tagTextView = String.valueOf(childTextView.getTag());
+                String rowTextView = String.valueOf(tagTextView.charAt(0));
+                String colTextView = String.valueOf(tagTextView.charAt(1));
+                _textViews[Integer.valueOf(rowTextView)][Integer.valueOf(colTextView)] = childTextView;
+                childTextView.setWidth(cellSide);
+                childTextView.setHeight(cellSide);
+
+                GridLayout childGridLayout = (GridLayout)layout.getChildAt(childIndex + 1);
+                String tagGridLayout = String.valueOf(childGridLayout.getTag());
+                String rowGridLayout = String.valueOf(tagGridLayout.charAt(0));
+                String colGridLayout = String.valueOf(tagGridLayout.charAt(1));
+                _gridLayoutNotes[Integer.valueOf(rowGridLayout)][Integer.valueOf(colGridLayout)] = childGridLayout;
+                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                params.width = cellSide;
+                params.height = cellSide;
+                childGridLayout.setLayoutParams(params);
             }
         }
     }
@@ -573,12 +587,12 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
 
         GridLayout keyboardGrid = findViewById(R.id.gameKeyboard);
         int length = keyboardGrid.getChildCount();
-        int height = _screenWidth / _sectionColRowLength;
-        int numericWidth = height * 7 / 5;
-        int commandWidth = height * 2;
+        int keyboardKeyHeight = _screenWidth / 9;
+        int numericWidth = _screenWidth / 7;
+        int commandWidth = numericWidth * 2;
         for (int index = 0; index < length; index++){
             TextView keyboardKey = (TextView)keyboardGrid.getChildAt(index);
-            keyboardKey.setHeight(height);
+            keyboardKey.setHeight(keyboardKeyHeight);
             SetKeyboardClick(keyboardKey);
             SetKeyboardKeysWidth(numericWidth, commandWidth, keyboardKey);
         }
@@ -598,10 +612,11 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             case "8":
             case "9":
             case "Clear":
+            case "Reset":
+            case "Edit":
                 keyboardKey.setWidth(numericWidth);
                 break;
             case "New Game":
-            case "Reset":
                 keyboardKey.setWidth(commandWidth);
                 break;
         }
@@ -615,9 +630,9 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
                 String text = String.valueOf(keyboardKey.getText());
                 String currentText = "";
                 char isConst = ' ';
-                if (lastSelectedCell != null){
-                    currentText = String.valueOf(lastSelectedCell.getText());
-                    isConst = String.valueOf(lastSelectedCell.getTag()).charAt(3);
+                if (lastSelectedCell.getCell() != null){
+                    currentText = String.valueOf(lastSelectedCell.getCell().getText());
+                    isConst = String.valueOf(lastSelectedCell.getCell().getTag()).charAt(3);
                 }
 
                 switch (text){
@@ -641,34 +656,54 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
                     case "Reset":
                         NewGameRestartClicked(false, true);
                         break;
+                    case "Edit":
+                        EditCellClicked(isConst);
+                        break;
                 }
             }
         });
     }
 
-    private void CaseClearSelected(String currentText, char isConst) {
+    private void EditCellClicked(char isConst) {
+        if (lastSelectedCell.getCell() == null)
+            return;
+        if (isConst == '1')
+            return;
+        lastSelectedCell.reverseEditMode();
+    }
 
-        if (lastSelectedCell == null)
+    private void CaseClearSelected(String currentText, char isConst) {
+        if (lastSelectedCell.getCell() == null)
             return;
         if (isConst == '1')
             return;
         if (currentText.equals(""))
             return;
+        if (lastSelectedCell.isInEditMode()){
+            lastSelectedCell.clearNotes();
+            return;
+        }
+
         _counter++;
-        lastSelectedCell.setText("", TextView.BufferType.EDITABLE);
-        OnCellClicked(lastSelectedCell);
+        lastSelectedCell.getCell().setText("", TextView.BufferType.EDITABLE);
+        OnCellClicked(lastSelectedCell.getCell());
     }
 
     private void CaseDigitSelected(String text, String currentText, char isConst) {
 
-        if (lastSelectedCell == null)
+        if (lastSelectedCell.getCell() == null)
             return;
         if (isConst == '1')
             return;
         if (currentText.equals(""))
             _counter--;
-        lastSelectedCell.setText(text, TextView.BufferType.EDITABLE);
-        OnCellClicked(lastSelectedCell);
+        if (lastSelectedCell.isInEditMode()){
+            lastSelectedCell.setNoteNumber(text);
+            return;
+        }
+
+        lastSelectedCell.getCell().setText(text, TextView.BufferType.EDITABLE);
+        OnCellClicked(lastSelectedCell.getCell());
         CheckWinState();
     }
 
@@ -833,6 +868,9 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             }
         }
 
+        if (lastSelectedCell != null) {
+            lastSelectedCell.setCell(null, null);
+        }
         int cellsCount = _cells.size();
         for(int index = 0; index < cellsCount; index++){
             CellData item = _cells.get(index);
@@ -841,6 +879,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             int digit = item.getCellDigit();
             int row = item.getRow();
             int col = item.getColumn();
+            ResetNotes(_gridLayoutNotes[row][col]);
             SetDefaultBackground(_textViews[row][col]);
             UpdateTextViewCell(_textViews[row][col], item.getIsCellConst());
             if (item.getIsCellConst().equals("0")) {
@@ -857,6 +896,14 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             _textViews[row][col].setText(String.valueOf(digit));
             _textViews[row][col].setTextColor(Color.GRAY);
         }
+    }
+
+    private void ResetNotes(GridLayout gridLayout) {
+        for(int index = 0; index < _sectionColRowLength; index++) {
+            TextView child = (TextView)gridLayout.getChildAt(index);
+            child.setText("");
+        }
+        gridLayout.setVisibility(View.INVISIBLE);
     }
 
     private void UpdateTextViewCell(TextView cell, String isConst) {
@@ -943,7 +990,9 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             }
         }
 
-        lastSelectedCell = view;
+        if (lastSelectedCell == null)
+            lastSelectedCell = new LastCellSelected();
+        lastSelectedCell.setCell(view, _gridLayoutNotes[selectedRowInt][selectedColInt]);
 
         char isConst = String.valueOf(view.getTag()).charAt(3);
         if (isConst == '1'){
@@ -977,7 +1026,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         }
     }
 
-    private void SetDefaultBackground(TextView currentWorkCell) {
+    private void SetDefaultBackground(View currentWorkCell) {
         char backgroundState = String.valueOf(currentWorkCell.getTag()).charAt(2);
         if (backgroundState == '1'){
             currentWorkCell.setBackground(getDrawable(R.drawable.sudoku_cell));
