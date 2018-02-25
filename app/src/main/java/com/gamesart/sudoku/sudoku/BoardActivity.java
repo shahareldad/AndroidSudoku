@@ -21,6 +21,7 @@ import android.view.WindowManager;
 import android.widget.GridLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.vending.billing.IInAppBillingService;
 import com.gamesart.sudoku.sudoku.util.LastCellSelected;
@@ -478,7 +479,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
                 _gridLayoutNotes[Integer.valueOf(rowGridLayout)][Integer.valueOf(colGridLayout)] = childGridLayout;
                 GridLayout.LayoutParams params = new GridLayout.LayoutParams();
                 params.width = cellSide;
-                params.height = cellSide;
+                params.height = 0;
                 childGridLayout.setLayoutParams(params);
             }
         }
@@ -695,12 +696,12 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             return;
         if (isConst == '1')
             return;
-        if (currentText.equals(""))
-            _counter--;
         if (lastSelectedCell.isInEditMode()){
             lastSelectedCell.setNoteNumber(text);
             return;
         }
+        if (currentText.equals(""))
+            _counter--;
 
         lastSelectedCell.getCell().setText(text, TextView.BufferType.EDITABLE);
         OnCellClicked(lastSelectedCell.getCell());
