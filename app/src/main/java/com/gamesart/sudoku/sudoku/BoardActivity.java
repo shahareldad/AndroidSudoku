@@ -229,14 +229,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
                     }
                 }
                 if (selection.equals(getString(R.string.watchVideo))){
-                    if (mRewardedVideoAd.isLoaded()) {
-                        mRewardedVideoAd.show();
-                    }else{
-                        loadRewardedVideoAd();
-                        if (mRewardedVideoAd.isLoaded()) {
-                            mRewardedVideoAd.show();
-                        }
-                    }
+                    ShowVideoAd();
                 }
             }
         });
@@ -244,13 +237,24 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         builder.create().show();
     }
 
+    private void ShowVideoAd() {
+        if (mRewardedVideoAd.isLoaded()) {
+            mRewardedVideoAd.show();
+        }else{
+            loadRewardedVideoAd();
+            if (mRewardedVideoAd.isLoaded()) {
+                mRewardedVideoAd.show();
+            }
+        }
+    }
+
     private void loadRewardedVideoAd() {
         //TODO: change this ad serial to mine
         //
-//        mRewardedVideoAd.loadAd("ca-app-pub-8402023979328526/7489955284",
-//                new AdRequest.Builder().build());
-        mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
+        mRewardedVideoAd.loadAd("ca-app-pub-8402023979328526/7489955284",
                 new AdRequest.Builder().build());
+//        mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
+//                new AdRequest.Builder().build());
     }
 
     private void SolveRandomCell(){
@@ -757,6 +761,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         });
 
         builder.create().show();
+        ShowVideoAd();
     }
 
     private void GameOverMenuItemClicked(DialogInterface dialogInterface, String selection) {
