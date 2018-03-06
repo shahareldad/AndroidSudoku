@@ -171,6 +171,15 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
 
         _currentCoinsTitle = findViewById(R.id.currentCoinsTitle);
         _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
+        if (_counter == 0){
+            _solveCellBtn.setEnabled(false);
+        }
+        else{
+            _solveCellBtn.setEnabled(true);
+        }
+        if (_tipsEngine.getCurrentNumberOfTips() == 0){
+            _buyCoinsBtn.setVisibility(View.VISIBLE);
+        }
 
         InitKeyboard();
     }
