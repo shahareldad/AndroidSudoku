@@ -48,6 +48,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
 
     private static final String TAG = "BoardActivity";
     private static final String FILENAME = "games_art_sudoku_saved_board";
+    private static final String FILENAME_GAME_DATA = "games_art_sudoku_game_data";
     public static final int REQUEST_CODE = 1001;
     public static final String PRODUCT_ID = "solve_random_cell_coins";
     public static final String ITEM_TYPE_INAPP = "inapp";
@@ -164,6 +165,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         }
         else {
             TryLoadSavedGame();
+            TryLoadGameData();
             StartNewGame(false, false);
         }
 
@@ -198,6 +200,7 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         super.onPause();
 
         SaveCurrentBoardState();
+        SaveCurrentGameData();
     }
 
     @Override
@@ -526,6 +529,78 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
                 _board[temp.getRow()][temp.getColumn()] = temp.getCellDigit();
             else
                 _board[temp.getRow()][temp.getColumn()] = 0;
+        }
+    }
+
+    private void TryLoadGameData() {
+
+        BufferedReader br = null;
+        StringBuilder builder = null;
+        InputStream stream = null;
+
+        try{
+            stream = openFileInput(FILENAME_GAME_DATA);
+            br = new BufferedReader(new InputStreamReader(stream));
+            builder = new StringBuilder();
+
+            String line;
+            while ((line = br.readLine()) != null){
+                builder.append(line);
+            }
+            stream.close();
+        }
+        catch (IOException ex){
+
+        }
+        finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (builder == null) {
+            return;
+        }
+
+        String result = builder.toString();
+        Gson gson = new GsonBuilder().create();
+        SavedGameData sgd = gson.fromJson(result, new TypeToken<SavedGameData>(){}.getType());
+        _level = sgd.getLevel();
+    }
+
+    private void SaveCurrentGameData() {
+        SavedGameData sgd = new SavedGameData();
+        sgd.setLevel(_level);
+
+        Gson gson = new GsonBuilder().create();
+        String result = gson.toJson(sgd);
+
+        FileOutputStream fos = null;
+        try{
+            fos = openFileOutput(FILENAME_GAME_DATA, Context.MODE_PRIVATE);
+            fos.write(result.getBytes());
+            fos.close();
+        }catch (IOException ex){
+
+        }finally {
+            if (fos != null){
+                try {
+                    fos.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
     }
 
