@@ -79,6 +79,9 @@ public class SudokuGenerator {
 
             case 1:                 // Difficulty level easy
                 result = new Random().nextInt(13) + 41;
+                if (BoardActivity.DEBUG_MODE == 1){
+                    result = 80;
+                }
                 break;
 
             case 2:               // Difficulty level medium

@@ -49,6 +49,9 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
     private static final String TAG = "BoardActivity";
     private static final String FILENAME = "games_art_sudoku_saved_board";
     private static final String FILENAME_GAME_DATA = "games_art_sudoku_game_data";
+    private static int _videoAdCounter = 5;
+
+    public static final int DEBUG_MODE = 0;
     public static final int REQUEST_CODE = 1001;
     public static final String PRODUCT_ID = "solve_random_cell_coins";
     public static final String ITEM_TYPE_INAPP = "inapp";
@@ -261,12 +264,13 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
     }
 
     private void loadRewardedVideoAd() {
-        //TODO: change this ad serial to mine
-        //
-        mRewardedVideoAd.loadAd("ca-app-pub-8402023979328526/7489955284",
-                new AdRequest.Builder().build());
-//        mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
-//                new AdRequest.Builder().build());
+        if (DEBUG_MODE == 1){
+            mRewardedVideoAd.loadAd("ca-app-pub-3940256099942544/5224354917",
+                    new AdRequest.Builder().build());
+        }else{
+            mRewardedVideoAd.loadAd("ca-app-pub-8402023979328526/7489955284",
+                    new AdRequest.Builder().build());
+        }
     }
 
     private void SolveRandomCell(){
@@ -292,7 +296,9 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
             updateCell(requiredCell, solvedDigit, tag);
             UpdateCellDataWithConst(solvedDigit, row, col);
             _counter--;
-            _tipsEngine.decreaseTipsAmount();
+            if (DEBUG_MODE != 1){
+                _tipsEngine.decreaseTipsAmount();
+            }
             _currentCoinsTitle.setText(getString(R.string.currentCoins) + " " + _tipsEngine.getCurrentNumberOfTips());
 
             if (_counter == 0){
@@ -845,7 +851,14 @@ public class BoardActivity extends AppCompatActivity implements RewardedVideoAdL
         });
 
         builder.create().show();
-        ShowVideoAd();
+
+        if (_videoAdCounter == 0){
+            _videoAdCounter = 5;
+            ShowVideoAd();
+        }
+        else{
+            _videoAdCounter--;
+        }
     }
 
     private void GameOverMenuItemClicked(DialogInterface dialogInterface, String selection) {
