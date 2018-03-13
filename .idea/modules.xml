@@ -4,7 +4,6 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/trunk.iml" filepath="$PROJECT_DIR$/trunk.iml" />
-      <module fileurl="file://C:\Users\shahar\AndroidStudioProjects\Sudoku\trunk\trunk.iml" filepath="C:\Users\shahar\AndroidStudioProjects\Sudoku\trunk\trunk.iml" />
     </modules>
   </component>
 </project>
