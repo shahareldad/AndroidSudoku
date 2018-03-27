@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">סודוקו - אומנות המשחקים</string>
+    <string name="areYouSure">האם אתה בטוח?</string>
+    <string name="buy100coins">קנה 100 מטבעות עבור 3.70 שח\"</string>
+    <string name="cancelButton">בטל</string>
+    <string name="clearBtnTxt">נקה</string>
+    <string name="currentCoins">מספר מטבעות</string>
+    <string name="continueCurrent">המשך</string>
+    <string name="easy">קל</string>
+    <string name="findError">מצא תאים שגויים</string>
+    <string name="gameOver">המשחק נגמר</string>
+    <string name="settings">הגדרות</string>
+    <string name="buyCoinsBtn">השג עוד מטבעות</string>
+    <string name="goodJob">עבודה טובה</string>
+    <string name="hard">קשה</string>
+    <string name="selectLevel">בחירת רמה</string>
+    <string name="load">טען משחק אחרון</string>
+    <string name="medium">בינוני</string>
+    <string name="startNew">משחק חדש</string>
+    <string name="newGameBtnTxt">משחק חדש</string>
+    <string name="newGameRestart">משחק חדש / התחל מחדש</string>
+    <string name="noErrors">לא נמצאו שגיאות</string>
+    <string name="noCoins">לא נשארו מטבעות</string>
+    <string name="nope">לא</string>
+    <string name="okButton">אוקיי</string>
+    <string name="resetBtnTxt">אפס</string>
+    <string name="resetCurrent">אפס נוכחי</string>
+    <string name="greenCross">הראה הצטלבות שורה וטור</string>
+    <string name="redSquares">הראה שגיאות בהכנסת מספר</string>
+    <string name="sameNumbers">הראה מספרים זהים בשורה וטור</string>
+    <string name="solutionIsIncorrect">פתרון אינו נכון</string>
+    <string name="solve">פתור</string>
+    <string name="solveCell">פתור תא אקראי</string>
+    <string name="thankYou">תודה</string>
+    <string name="thankYouForPurchase">תודה שרכשת מטבעות</string>
+</resources>
